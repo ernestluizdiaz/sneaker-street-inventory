@@ -93,13 +93,13 @@ export default function Nav() {
 									Incoming
 								</Link>
 								<Link
-									href="#"
+									href="/outgoing"
 									className="rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700 hover:text-white"
 								>
 									Outgoing
 								</Link>
 								<Link
-									href="#"
+									href="/products"
 									className="rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700 hover:text-white"
 								>
 									Products
@@ -202,13 +202,13 @@ export default function Nav() {
 						Incoming
 					</Link>
 					<Link
-						href="#"
+						href="/outgoing"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
 					>
 						Outgoing
 					</Link>
 					<Link
-						href="#"
+						href="/products"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
 					>
 						Products
