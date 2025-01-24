@@ -87,7 +87,7 @@ export default function Nav() {
 									Inventory
 								</Link>
 								<Link
-									href="#"
+									href="/incoming"
 									className="rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700 hover:text-white"
 								>
 									Incoming
@@ -196,7 +196,7 @@ export default function Nav() {
 						Inventory
 					</Link>
 					<Link
-						href="#"
+						href="/incoming"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
 					>
 						Incoming
