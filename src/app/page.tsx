@@ -1,10 +1,9 @@
-import Image from "next/image";
-import Nav from "./components/nav";
+import Dashboard from "./components/dashboard";
 
 export default function Home() {
 	return (
 		<div>
-			<Nav />
+			<Dashboard />
 		</div>
 	);
 }

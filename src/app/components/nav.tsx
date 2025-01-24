@@ -60,7 +60,7 @@ export default function Nav() {
 					{/* Main Content */}
 					<div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
 						<div className="flex shrink-0 items-center">
-							<a href="/" className="flex items-center">
+							<Link href="/" className="flex items-center">
 								<Image
 									className="h-8 w-auto"
 									src={Logo}
@@ -68,48 +68,48 @@ export default function Nav() {
 									width={100}
 									height={100}
 								/>
-							</a>
+							</Link>
 						</div>
 
 						<div className="hidden sm:ml-6 sm:block">
 							<div className="flex space-x-4">
-								<a
-									href="#"
-									className="rounded-md px-3 py-2 text-sm font-medium text-white"
+								<Link
+									href="/dashboard"
+									className="rounded-md px-3 py-2 text-sm text-white"
 									aria-current="page"
 								>
 									Dashboard
-								</a>
-								<a
-									href="#"
-									className="rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 hover:text-white"
+								</Link>
+								<Link
+									href="/inventory"
+									className="rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700 hover:text-white"
 								>
 									Inventory
-								</a>
-								<a
+								</Link>
+								<Link
 									href="#"
-									className="rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 hover:text-white"
+									className="rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700 hover:text-white"
 								>
 									Incoming
-								</a>
-								<a
+								</Link>
+								<Link
 									href="#"
-									className="rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 hover:text-white"
+									className="rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700 hover:text-white"
 								>
 									Outgoing
-								</a>
-								<a
+								</Link>
+								<Link
 									href="#"
-									className="rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 hover:text-white"
+									className="rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700 hover:text-white"
 								>
 									Products
-								</a>
-								<a
+								</Link>
+								<Link
 									href="#"
-									className="rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 hover:text-white"
+									className="rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700 hover:text-white"
 								>
 									Settings
-								</a>
+								</Link>
 							</div>
 						</div>
 					</div>
@@ -146,7 +146,7 @@ export default function Nav() {
 								aria-labelledby="user-menu-button"
 								tabIndex={-1}
 							>
-								<a
+								<Link
 									href="#"
 									className="block px-4 py-2 text-sm text-gray-700"
 									role="menuitem"
@@ -154,8 +154,8 @@ export default function Nav() {
 									id="user-menu-item-0"
 								>
 									Your Profile
-								</a>
-								<a
+								</Link>
+								<Link
 									href="#"
 									className="block px-4 py-2 text-sm text-gray-700"
 									role="menuitem"
@@ -163,8 +163,8 @@ export default function Nav() {
 									id="user-menu-item-1"
 								>
 									Settings
-								</a>
-								<a
+								</Link>
+								<Link
 									href="#"
 									className="block px-4 py-2 text-sm text-gray-700"
 									role="menuitem"
@@ -172,7 +172,7 @@ export default function Nav() {
 									id="user-menu-item-2"
 								>
 									Sign out
-								</a>
+								</Link>
 							</div>
 						</div>
 					</div>
@@ -182,43 +182,43 @@ export default function Nav() {
 			{/* Mobile Menu */}
 			<div className="sm:hidden hidden" id="mobile-menu">
 				<div className="space-y-1 px-2 pt-2 pb-3">
-					<a
-						href="#"
+					<Link
+						href="/dashboard"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white"
 						aria-current="page"
 					>
 						Dashboard
-					</a>
-					<a
-						href="#"
+					</Link>
+					<Link
+						href="/inventory"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
 					>
 						Inventory
-					</a>
-					<a
+					</Link>
+					<Link
 						href="#"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
 					>
 						Incoming
-					</a>
-					<a
+					</Link>
+					<Link
 						href="#"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
 					>
 						Outgoing
-					</a>
-					<a
+					</Link>
+					<Link
 						href="#"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
 					>
 						Products
-					</a>
-					<a
+					</Link>
+					<Link
 						href="#"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
 					>
 						Settings
-					</a>
+					</Link>
 				</div>
 			</div>
 		</nav>
