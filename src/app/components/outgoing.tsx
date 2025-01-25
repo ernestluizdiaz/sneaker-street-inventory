@@ -121,7 +121,7 @@ const outgoing = () => {
 					<thead className="text-xs text-black bg-[#e5e5e5] dark:bg-gray-700 dark:text-black">
 						<tr>
 							<th scope="col" className="px-6 py-3">
-								Incoming ID
+								Outgoing ID
 							</th>
 							<th scope="col" className="px-6 py-3">
 								Item

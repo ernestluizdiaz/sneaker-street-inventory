@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 import Image from "next/image";
 import AddIcon from "@/../public/img/icon.png";
 import {
@@ -11,6 +12,16 @@ import {
 	PaginationNext,
 	PaginationPrevious,
 } from "@/components/ui/pagination";
+import BrandDialog from "@/app/components/brandDialog"; // Import your brandDialog component
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 
 const brands = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -30,14 +41,28 @@ const brands = () => {
 					<h1 className="font-extrabold text-2xl py-8 sm:pl-3 pl-0">
 						Brands
 					</h1>
-					<button>
-						<Image
-							src={AddIcon}
-							alt="Add Icon"
-							width={18}
-							height={18}
-						/>
-					</button>
+					{/* Modal Trigger */}
+					<Dialog>
+						<DialogTrigger asChild>
+							<button>
+								<Image
+									src={AddIcon}
+									alt="Add Icon"
+									width={18}
+									height={18}
+								/>
+							</button>
+						</DialogTrigger>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>Add Brand</DialogTitle>
+							</DialogHeader>
+							<BrandDialog />
+							<DialogFooter>
+								<Button type="submit">Save changes</Button>
+							</DialogFooter>
+						</DialogContent>
+					</Dialog>
 				</div>
 				<div className="relative overflow-x-auto px-3">
 					<div className="flex flex-column sm:flex-row flex-wrap space-y-4 sm:space-y-0 items-center justify-between pb-4">

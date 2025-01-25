@@ -13,6 +13,16 @@ import {
 } from "@/components/ui/pagination";
 import Brands from "@/app/components/brands";
 import Options from "@/app/components/options";
+import ProductDialog from "@/app/components/productDialog"; // Import your ProductDialog component
+import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 
 const products = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -35,14 +45,27 @@ const products = () => {
 						<h1 className="font-extrabold text-2xl py-8 sm:pl-3 pl-0">
 							Products
 						</h1>
-						<button>
-							<Image
-								src={AddIcon}
-								alt="Add Icon"
-								width={18}
-								height={18}
-							/>
-						</button>
+						<Dialog>
+							<DialogTrigger asChild>
+								<button>
+									<Image
+										src={AddIcon}
+										alt="Add Icon"
+										width={18}
+										height={18}
+									/>
+								</button>
+							</DialogTrigger>
+							<DialogContent>
+								<DialogHeader>
+									<DialogTitle>Add Product</DialogTitle>
+								</DialogHeader>
+								<ProductDialog />
+								<DialogFooter>
+									<Button type="submit">Save changes</Button>
+								</DialogFooter>
+							</DialogContent>
+						</Dialog>
 					</div>
 
 					{/* Table Section */}
