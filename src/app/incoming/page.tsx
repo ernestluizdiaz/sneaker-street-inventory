@@ -1,5 +1,5 @@
 import Incoming from "@/app/components/incoming";
 
-export default function DashboardPage() {
+export default function IncomingPage() {
 	return <Incoming />;
 }
