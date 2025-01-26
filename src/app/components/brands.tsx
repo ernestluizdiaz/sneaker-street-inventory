@@ -59,7 +59,7 @@ const brands = () => {
 							</DialogHeader>
 							<BrandDialog />
 							<DialogFooter>
-								<Button type="submit">Save changes</Button>
+								<Button type="submit">Add Brand</Button>
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>

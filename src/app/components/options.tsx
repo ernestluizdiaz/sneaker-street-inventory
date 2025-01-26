@@ -57,7 +57,7 @@ const options = () => {
 							</DialogHeader>
 							<OptionDialog />
 							<DialogFooter>
-								<Button type="submit">Save changes</Button>
+								<Button type="submit">Add Options</Button>
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>

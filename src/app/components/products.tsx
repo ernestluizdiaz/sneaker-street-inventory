@@ -62,7 +62,7 @@ const products = () => {
 								</DialogHeader>
 								<ProductDialog />
 								<DialogFooter>
-									<Button type="submit">Save changes</Button>
+									<Button type="submit">Add Product</Button>
 								</DialogFooter>
 							</DialogContent>
 						</Dialog>

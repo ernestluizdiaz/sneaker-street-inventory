@@ -11,6 +11,16 @@ import {
 	PaginationNext,
 	PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import ReceivingDialog from "@/app/components/receivingDialog"; // Import your dispatchDialog component
+import {
+	Dialog,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 
 const incoming = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -35,14 +45,30 @@ const incoming = () => {
 				<h1 className="font-extrabold text-2xl py-8 sm:pl-3 pl-0">
 					Incoming
 				</h1>
-				<button>
-					<Image
-						src={AddIcon}
-						alt="Add Icon"
-						width={18}
-						height={18}
-					/>
-				</button>
+				<Dialog>
+					<DialogTrigger asChild>
+						<button>
+							<Image
+								src={AddIcon}
+								alt="Add Icon"
+								width={18}
+								height={18}
+							/>
+						</button>
+					</DialogTrigger>
+					<DialogContent className="max-w-5xl w-full p-6 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-auto">
+						<DialogHeader>
+							<DialogTitle>Receiving</DialogTitle>
+						</DialogHeader>
+						<div className="space-y-4">
+							{/* Your modal content goes here */}
+							<ReceivingDialog />
+						</div>
+						<DialogFooter>
+							<Button type="submit">Receive Items</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
 			</div>
 
 			{/* Table Section */}

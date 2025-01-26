@@ -65,7 +65,7 @@ const Inventory = () => {
 							<DispatchDialog />
 						</div>
 						<DialogFooter>
-							<Button type="submit">Save changes</Button>
+							<Button type="submit">Dispatch Items</Button>
 						</DialogFooter>
 					</DialogContent>
 				</Dialog>
