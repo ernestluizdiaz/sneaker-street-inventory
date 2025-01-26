@@ -60,7 +60,10 @@ export default function Nav() {
 					{/* Main Content */}
 					<div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
 						<div className="flex shrink-0 items-center">
-							<Link href="/" className="flex items-center">
+							<Link
+								href="/dashboard"
+								className="flex items-center"
+							>
 								<Image
 									className="h-8 w-auto"
 									src={Logo}

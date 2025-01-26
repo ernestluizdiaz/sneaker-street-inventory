@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const BrandDialog = () => {
+const brandDialog = () => {
 	// State for the form fields
 	const [name, setName] = useState("");
 	const [username, setUsername] = useState("");
@@ -51,4 +51,4 @@ const BrandDialog = () => {
 	);
 };
 
-export default BrandDialog;
+export default brandDialog;

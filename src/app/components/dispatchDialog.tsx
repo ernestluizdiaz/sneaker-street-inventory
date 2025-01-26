@@ -13,41 +13,42 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const productDialog = () => {
+const dispatchDialog = () => {
 	// State for the form fields
 	const [name, setName] = useState("");
 	const [username, setUsername] = useState("");
 
 	return (
 		<div>
-			<div className="flex space-x-4 mb-4">
-				<div className="w-1/2">
-					<Label className="font-bold" htmlFor="product">
-						Product
+			<div className="space-y-4 mb-4">
+				<div className="flex flex-col items-start">
+					<Label className="font-bold" htmlFor="remarks">
+						Remarks
 					</Label>
-					<input
-						id="product"
-						type="text"
+					<textarea
+						id="remarks"
 						className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-						placeholder="Enter product name"
-					/>
+						placeholder="Enter remarks"
+						rows={4}
+					></textarea>
 				</div>
 
-				<div className="w-1/2">
-					<Label className="font-bold" htmlFor="brand">
-						Brand
+				<div className="flex flex-col items-start">
+					<Label className="font-bold" htmlFor="courier">
+						Courier
 					</Label>
 					<select
-						id="brand"
+						id="courier"
 						className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
 						defaultValue=""
 					>
 						<option value="" disabled>
-							Select a brand
-						</option>{" "}
-						<option value="apple">Apple</option>
-						<option value="samsung">Samsung</option>
-						<option value="xiaomi">Xiaomi</option>
+							Select a courier
+						</option>
+						<option value="dhl">DHL</option>
+						<option value="fedex">FedEx</option>
+						<option value="ups">UPS</option>
+						<option value="tnt">TNT</option>
 					</select>
 				</div>
 			</div>
@@ -62,10 +63,25 @@ const productDialog = () => {
 							/>
 						</th>
 						<th scope="col" className="px-6 py-3">
+							Item
+						</th>
+						<th scope="col" className="px-6 py-3">
 							Option
 						</th>
 						<th scope="col" className="px-6 py-3">
 							SKU
+						</th>
+						<th scope="col" className="px-6 py-3">
+							Available QTY
+						</th>
+						<th scope="col" className="px-6 py-3">
+							Dispatch QTY
+						</th>
+						<th scope="col" className="px-6 py-3">
+							Gross Price (Per Unit)
+						</th>
+						<th scope="col" className="px-6 py-3">
+							Dispatch Price (Per Unit)
 						</th>
 					</tr>
 				</thead>
@@ -87,6 +103,21 @@ const productDialog = () => {
 								className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
 							/>
 						</td>
+						<td className="px-6 py-4">MBP-17</td>
+						<td className="px-6 py-4">10</td>
+						<td className="px-6 py-4">
+							<input
+								type="number"
+								className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+							/>
+						</td>
+						<td className="px-6 py-4">$1,500</td>
+						<td className="px-6 py-4">
+							<input
+								type="number"
+								className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+							/>
+						</td>
 					</tr>
 					{/* Add more rows here */}
 				</tbody>
@@ -95,4 +126,4 @@ const productDialog = () => {
 	);
 };
 
-export default productDialog;
+export default dispatchDialog;

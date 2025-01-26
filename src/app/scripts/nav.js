@@ -1,4 +1,3 @@
-// nav.js
 export const toggleMenu = () => {
 	const mobileMenuButton = document.querySelector(
 		'[aria-controls="mobile-menu"]'
@@ -38,4 +37,20 @@ export const toggleMenu = () => {
 			link.classList.add("font-bold");
 		});
 	});
+
+	// Make the Dashboard link bold when the logo is clicked
+	const logoLink = document.querySelector('a[href="/dashboard"]');
+	if (logoLink) {
+		logoLink.addEventListener("click", () => {
+			// Remove font-bold class from all links
+			links.forEach((item) => item.classList.remove("font-bold"));
+			// Add font-bold class to the Dashboard link
+			const dashboardLink = Array.from(links).find(
+				(link) => link.textContent.trim() === "Dashboard"
+			);
+			if (dashboardLink) {
+				dashboardLink.classList.add("font-bold");
+			}
+		});
+	}
 };
