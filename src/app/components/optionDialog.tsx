@@ -23,11 +23,11 @@ const optionDialog = () => {
 			<div className="space-y-4 mb-4">
 				{/* Brand Name with Textbox */}
 				<div className="flex flex-col items-start">
-					<Label className="font-bold" htmlFor="brand-name">
+					<Label className="font-bold" htmlFor="option-name">
 						Option Name
 					</Label>
 					<input
-						id="brand-name"
+						id="option-name"
 						type="text"
 						className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
 						placeholder="Enter brand name"
@@ -36,11 +36,11 @@ const optionDialog = () => {
 
 				{/* Brand Code with Textbox */}
 				<div className="flex flex-col items-start">
-					<Label className="font-bold" htmlFor="brand-code">
+					<Label className="font-bold" htmlFor="description">
 						Description
 					</Label>
 					<textarea
-						id="brand-code"
+						id="description"
 						className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
 						placeholder="Enter description"
 						rows={4} // You can adjust the number of rows as needed
