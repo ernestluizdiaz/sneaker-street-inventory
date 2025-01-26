@@ -13,8 +13,10 @@ const BrandDialog = ({
 }) => {
 	const [name, setName] = useState(brand ? brand.brandname : "");
 	const [brandCode, setBrandCode] = useState(brand ? brand.brandcode : "");
-	const [errorMessage, setErrorMessage] = useState("");
+	const [brandErrorMessage, setBrandErrorMessage] = useState(""); // Separate error message for brand name
+	const [brandCodeErrorMessage, setBrandCodeErrorMessage] = useState(""); // Separate error message for brand code
 	const [isBrandExisting, setIsBrandExisting] = useState(false);
+	const [isBrandCodeExisting, setIsBrandCodeExisting] = useState(false);
 
 	const { toast } = useToast();
 
@@ -41,10 +43,49 @@ const BrandDialog = ({
 
 			if (data) {
 				setIsBrandExisting(true);
-				setErrorMessage(`Brand "${data.brandname}" already exists`);
+				setBrandErrorMessage(
+					`Brand "${data.brandname}" already exists`
+				);
 			} else {
 				setIsBrandExisting(false);
-				setErrorMessage("");
+				setBrandErrorMessage("");
+			}
+		}
+	};
+
+	const checkIfBrandCodeExists = async (code: string) => {
+		if (code) {
+			// Check if brand code is alphanumeric
+			const alphabeticRegex = /[a-zA-Z]/; // Regex to check for the presence of any alphabetic characters
+			if (alphabeticRegex.test(code)) {
+				setIsBrandCodeExisting(false);
+				setBrandCodeErrorMessage(
+					"Brand code should not contain any characters."
+				);
+				return; // Stop further checking if the brand code contains characters
+			}
+
+			// Proceed with checking if the brand code already exists
+			const query = supabase
+				.from("brands")
+				.select("brandcode")
+				.eq("brandcode", code);
+
+			// Exclude the current brand from the check
+			if (brand && brand.brandcode) {
+				query.not("brandcode", "eq", brand.brandcode);
+			}
+
+			const { data, error } = await query.single();
+
+			if (data) {
+				setIsBrandCodeExisting(true);
+				setBrandCodeErrorMessage(
+					`Brand code "${data.brandcode}" already exists`
+				);
+			} else {
+				setIsBrandCodeExisting(false);
+				setBrandCodeErrorMessage("");
 			}
 		}
 	};
@@ -52,6 +93,10 @@ const BrandDialog = ({
 	useEffect(() => {
 		checkIfBrandExists(name);
 	}, [name]);
+
+	useEffect(() => {
+		checkIfBrandCodeExists(brandCode);
+	}, [brandCode]);
 
 	const handleSubmit = async () => {
 		if (!name || !brandCode) {
@@ -94,7 +139,7 @@ const BrandDialog = ({
 
 			setTimeout(() => {
 				window.location.reload();
-			}, 1500);
+			}, 1000);
 		}
 	};
 
@@ -116,7 +161,7 @@ const BrandDialog = ({
 				</div>
 
 				{isBrandExisting && (
-					<p className="text-red-500 text-sm">{errorMessage}</p>
+					<p className="text-red-500 text-sm">{brandErrorMessage}</p>
 				)}
 
 				<div className="flex flex-col items-start">
@@ -132,10 +177,19 @@ const BrandDialog = ({
 						onChange={(e) => setBrandCode(e.target.value)}
 					/>
 				</div>
+
+				{brandCodeErrorMessage && (
+					<p className="text-red-500 text-sm">
+						{brandCodeErrorMessage}
+					</p>
+				)}
 			</div>
 
 			<DialogFooter className="flex justify-end">
-				<Button onClick={handleSubmit} disabled={isBrandExisting}>
+				<Button
+					onClick={handleSubmit}
+					disabled={isBrandExisting || isBrandCodeExisting}
+				>
 					{brand ? "Update Brand" : "Add Brand"}
 				</Button>
 			</DialogFooter>

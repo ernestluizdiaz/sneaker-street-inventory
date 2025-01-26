@@ -1,4 +1,3 @@
-"use client";
 import React, { useState, useEffect } from "react";
 import { fetchBrands } from "@/app/scripts/fetchBrands";
 import Image from "next/image";
@@ -24,14 +23,17 @@ const Brands = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [brands, setBrands] = useState<
-		{ brandname: string; brandcode: string }[]
+		{
+			brandname: string;
+			brandcode: string;
+		}[]
 	>([]);
 	const [editBrand, setEditBrand] = useState<{
 		brandname: string;
 		brandcode: string;
 	} | null>(null);
-
-	const [dialogOpen, setDialogOpen] = useState(false); // State to control dialog visibility
+	const [dialogOpen, setDialogOpen] = useState(false);
+	const [searchQuery, setSearchQuery] = useState("");
 
 	useEffect(() => {
 		const loadBrands = async () => {
@@ -41,20 +43,49 @@ const Brands = () => {
 		loadBrands();
 	}, []);
 
+	const [isFirstPage, setIsFirstPage] = useState(false);
+	const [isLastPage, setIsLastPage] = useState(false);
+
 	const handlePageChange = (page: number) => {
 		setCurrentPage(page);
+		setIsFirstPage(page === 1);
+		setIsLastPage(page === totalPages);
 	};
 
 	const handleEditClick = (brand: {
 		brandname: string;
 		brandcode: string;
 	}) => {
-		setEditBrand(brand); // Set the brand to be edited
-		setDialogOpen(true); // Open the dialog
+		setEditBrand(brand);
+		setDialogOpen(true);
 	};
 
-	const totalPages = Math.ceil(brands.length / itemsPerPage);
-	const paginatedBrands = brands.slice(
+	const handleDialogClose = () => {
+		setDialogOpen(false);
+		setEditBrand(null);
+	};
+
+	const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		setSearchQuery(event.target.value);
+	};
+
+	const handleDropdownSelection = (
+		event: React.ChangeEvent<HTMLSelectElement>
+	) => {
+		setItemsPerPage(parseInt(event.target.value, 10));
+		setCurrentPage(1); // Reset to first page when items per page changes
+	};
+
+	const filteredBrands = brands.filter(
+		(brand) =>
+			brand.brandname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			String(brand.brandcode)
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase())
+	);
+
+	const totalPages = Math.ceil(filteredBrands.length / itemsPerPage);
+	const paginatedBrands = filteredBrands.slice(
 		(currentPage - 1) * itemsPerPage,
 		currentPage * itemsPerPage
 	);
@@ -65,9 +96,13 @@ const Brands = () => {
 				<h1 className="font-extrabold text-2xl py-8 sm:pl-3 pl-0">
 					Brands
 				</h1>
-				<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-					{" "}
-					{/* Control dialog open state */}
+				<Dialog
+					open={dialogOpen}
+					onOpenChange={(open) => {
+						setDialogOpen(open);
+						if (!open) handleDialogClose();
+					}}
+				>
 					<DialogTrigger asChild>
 						<button>
 							<Image
@@ -90,6 +125,50 @@ const Brands = () => {
 			</div>
 
 			<div className="relative overflow-x-auto px-3">
+				<div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 space-y-4 sm:space-y-0">
+					<div className="flex items-center space-x-4">
+						<select
+							value={itemsPerPage}
+							onChange={handleDropdownSelection}
+							className="text-black bg-white border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-white dark:border-black dark:focus:ring-black"
+						>
+							<option value={5}>Show: 5 items</option>
+							<option value={10}>Show: 10 items</option>
+							<option value={15}>Show: 15 items</option>
+							<option value={20}>Show: 20 items</option>
+						</select>
+					</div>
+
+					<div className="relative">
+						<label htmlFor="table-search" className="sr-only">
+							Search
+						</label>
+						<div className="absolute inset-y-0 left-0 flex items-center ps-3 pointer-events-none">
+							<svg
+								className="w-5 h-5 text-black dark:text-black"
+								aria-hidden="true"
+								fill="currentColor"
+								viewBox="0 0 20 20"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path
+									fillRule="evenodd"
+									d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+									clipRule="evenodd"
+								/>
+							</svg>
+						</div>
+						<input
+							type="text"
+							id="table-search"
+							className="block p-2 ps-10 text-sm text-black border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+							placeholder="Search for items"
+							value={searchQuery}
+							onChange={handleSearchChange}
+						/>
+					</div>
+				</div>
+
 				<table className="w-full text-sm text-left rtl:text-right text-black dark:text-black">
 					<thead className="text-xs text-black bg-[#e5e5e5] dark:bg-gray-700 dark:text-black">
 						<tr>
@@ -116,7 +195,7 @@ const Brands = () => {
 								<td className="px-6 py-4">{brand.brandcode}</td>
 								<td className="px-6 py-4">
 									<button
-										onClick={() => handleEditClick(brand)} // Handle Edit Click
+										onClick={() => handleEditClick(brand)}
 										className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
 									>
 										Edit
@@ -132,24 +211,24 @@ const Brands = () => {
 				<Pagination>
 					<PaginationContent>
 						<PaginationItem>
-							{currentPage > 1 ? (
+							{!isFirstPage && (
 								<PaginationPrevious
 									href="#"
-									onClick={() =>
-										handlePageChange(currentPage - 1)
-									}
+									onClick={(event) => {
+										event.preventDefault();
+										handlePageChange(currentPage - 1);
+									}}
 								/>
-							) : (
-								<span className="pagination-previous-disabled">
-									Previous
-								</span>
 							)}
 						</PaginationItem>
 						{[...Array(totalPages)].map((_, index) => (
 							<PaginationItem key={index}>
 								<PaginationLink
 									href="#"
-									onClick={() => handlePageChange(index + 1)}
+									onClick={(event) => {
+										event.preventDefault();
+										handlePageChange(index + 1);
+									}}
 									className={
 										currentPage === index + 1
 											? "text-blue-500"
@@ -161,17 +240,14 @@ const Brands = () => {
 							</PaginationItem>
 						))}
 						<PaginationItem>
-							{currentPage < totalPages ? (
+							{!isLastPage && (
 								<PaginationNext
 									href="#"
-									onClick={() =>
-										handlePageChange(currentPage + 1)
-									}
+									onClick={(event) => {
+										event.preventDefault();
+										handlePageChange(currentPage + 1);
+									}}
 								/>
-							) : (
-								<span className="pagination-next-disabled">
-									Next
-								</span>
 							)}
 						</PaginationItem>
 					</PaginationContent>
