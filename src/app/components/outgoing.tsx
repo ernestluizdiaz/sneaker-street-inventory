@@ -136,10 +136,10 @@ const outgoing = () => {
 								SKU
 							</th>
 							<th scope="col" className="px-6 py-3">
-								Supplier Cost
+								Sold Price
 							</th>
 							<th scope="col" className="px-6 py-3">
-								ETA
+								Courier
 							</th>
 							<th scope="col" className="px-6 py-3">
 								Delivery Status

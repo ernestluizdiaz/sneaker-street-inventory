@@ -98,11 +98,20 @@ const dispatchDialog = () => {
 							Apple MacBook Pro 17"
 						</td>
 						<td className="px-6 py-4">
-							<input
-								type="text"
+							<select
 								className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-							/>
+								defaultValue=""
+							>
+								<option value="" disabled>
+									Select an option
+								</option>
+								{/* Replace these options with dynamic values based on your data */}
+								<option value="option1">Option 1</option>
+								<option value="option2">Option 2</option>
+								<option value="option3">Option 3</option>
+							</select>
 						</td>
+
 						<td className="px-6 py-4">MBP-17</td>
 						<td className="px-6 py-4">10</td>
 						<td className="px-6 py-4">

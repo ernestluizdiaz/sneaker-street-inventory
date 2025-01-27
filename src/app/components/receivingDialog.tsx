@@ -35,7 +35,7 @@ const receivingDialog = () => {
 
 				<div className="flex flex-col items-start">
 					<Label className="font-bold" htmlFor="date">
-						Date
+						ETA
 					</Label>
 					<input
 						type="date"

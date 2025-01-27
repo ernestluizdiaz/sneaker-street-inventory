@@ -1,11 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import AddIcon from "@/../public/img/icon.png";
+import { fetchProducts } from "@/app/scripts/fetchProducts";
 import {
 	Pagination,
 	PaginationContent,
-	PaginationEllipsis,
 	PaginationItem,
 	PaginationLink,
 	PaginationNext,
@@ -13,26 +13,67 @@ import {
 } from "@/components/ui/pagination";
 import Brands from "@/app/components/brands";
 import Options from "@/app/components/options";
-import ProductDialog from "@/app/components/productDialog"; // Import your ProductDialog component
-import { Button } from "@/components/ui/button";
+import ProductDialog from "@/app/components/productDialog";
 import {
 	Dialog,
 	DialogContent,
-	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
 
-const products = () => {
+const Products = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
-	const [stockFilter, setStockFilter] = useState("all"); // State to track stock status
+	const [currentPage, setCurrentPage] = useState(1);
+	const [products, setProducts] = useState<any[]>([]); // State to store products
+	const [searchQuery, setSearchQuery] = useState("");
+
+	useEffect(() => {
+		// Fetch products on component mount
+		const getProducts = async () => {
+			const data = await fetchProducts();
+			setProducts(data);
+		};
+		getProducts();
+	}, []);
 
 	// Handle selection from page size dropdown
 	const handleDropdownSelection = (
 		event: React.ChangeEvent<HTMLSelectElement>
 	) => {
 		setItemsPerPage(Number(event.target.value));
+		setCurrentPage(1); // Reset to first page
+	};
+
+	// Handle search query change
+	const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		setSearchQuery(event.target.value);
+		setCurrentPage(1); // Reset to first page when search query changes
+	};
+
+	// Filter products by search query
+	const filteredProducts = products.filter(
+		(product) =>
+			product.productname
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase()) ||
+			String(product.sku)
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase())
+	);
+
+	// Calculate total pages
+	const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+
+	// Paginated products based on current page
+	const paginatedProducts = filteredProducts.slice(
+		(currentPage - 1) * itemsPerPage,
+		currentPage * itemsPerPage
+	);
+
+	// Handle page change
+	const handlePageChange = (page: number) => {
+		setCurrentPage(page);
 	};
 
 	return (
@@ -61,9 +102,6 @@ const products = () => {
 									<DialogTitle>Add Product</DialogTitle>
 								</DialogHeader>
 								<ProductDialog />
-								<DialogFooter>
-									<Button type="submit">Add Product</Button>
-								</DialogFooter>
 							</DialogContent>
 						</Dialog>
 					</div>
@@ -111,8 +149,10 @@ const products = () => {
 								<input
 									type="text"
 									id="table-search"
+									value={searchQuery}
+									onChange={handleSearchChange}
 									className="block p-2 ps-10 text-sm text-black border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-									placeholder="Search for items"
+									placeholder="Search for products"
 								/>
 							</div>
 						</div>
@@ -131,7 +171,7 @@ const products = () => {
 										Option
 									</th>
 									<th scope="col" className="px-6 py-3">
-										Description
+										SKU
 									</th>
 									<th scope="col" className="px-6 py-3">
 										Action
@@ -139,64 +179,94 @@ const products = () => {
 								</tr>
 							</thead>
 							<tbody>
-								{/* Example row */}
-								<tr className="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
-									<td className="px-6 py-4 font-medium text-black whitespace-nowrap dark:text-white">
-										Apple MacBook Pro 17"
-									</td>
-									<td className="px-6 py-4">Silver</td>
-									<td className="px-6 py-4">Laptop</td>
-									<td className="px-6 py-4">$2999</td>
-									<td className="px-6 py-4">
-										<a
-											href="#"
-											className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-										>
-											Edit
-										</a>
-									</td>
-								</tr>
+								{paginatedProducts.map((product, index) => (
+									<tr
+										key={index}
+										className="bg-white border-b dark:bg-gray-900 dark:border-gray-700"
+									>
+										<td className="px-6 py-4 font-medium text-black whitespace-nowrap dark:text-white">
+											{product.productname}
+										</td>
+										<td className="px-6 py-4">
+											{product.brands?.brandname}
+										</td>
+										<td className="px-6 py-4">
+											{product.options?.optionname}
+										</td>
+										<td className="px-6 py-4">
+											{product.sku}
+										</td>
+										<td className="px-6 py-4">
+											<a
+												href="#"
+												className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+											>
+												Edit
+											</a>
+										</td>
+									</tr>
+								))}
 							</tbody>
 						</table>
 					</div>
 					<div className="flex justify-between items-center py-4">
 						<Pagination>
 							<PaginationContent>
-								<PaginationItem>
-									<PaginationPrevious href="#" />
-								</PaginationItem>
-								<PaginationItem>
-									<PaginationLink href="#">1</PaginationLink>
-								</PaginationItem>
-								<PaginationItem>
-									<PaginationLink href="#">2</PaginationLink>
-								</PaginationItem>
-								<PaginationItem>
-									<PaginationLink href="#">3</PaginationLink>
-								</PaginationItem>
-								<PaginationItem>
-									<PaginationEllipsis />
-								</PaginationItem>
-								<PaginationItem>
-									<PaginationNext href="#" />
-								</PaginationItem>
+								{currentPage > 1 && (
+									<PaginationItem>
+										<PaginationPrevious
+											href="#"
+											onClick={() =>
+												handlePageChange(
+													currentPage - 1
+												)
+											}
+										/>
+									</PaginationItem>
+								)}
+								{Array.from(
+									{ length: totalPages },
+									(_, index) => (
+										<PaginationItem key={index}>
+											<PaginationLink
+												href="#"
+												onClick={() =>
+													handlePageChange(index + 1)
+												}
+												isActive={
+													currentPage === index + 1
+												}
+											>
+												{index + 1}
+											</PaginationLink>
+										</PaginationItem>
+									)
+								)}
+								{currentPage < totalPages && (
+									<PaginationItem>
+										<PaginationNext
+											href="#"
+											onClick={() =>
+												handlePageChange(
+													currentPage + 1
+												)
+											}
+										/>
+									</PaginationItem>
+								)}
 							</PaginationContent>
 						</Pagination>
 					</div>
 				</div>
 
-				{/* Brands and Options */}
-				<div className="lg:w-1/3 mt-6 lg:mt-0">
-					<div className="pb-6">
-						<Brands />
-					</div>
-					<div>
-						<Options />
-					</div>
+				{/* Brands Section */}
+				<div className="lg:w-1/3">
+					<Brands />
+					<Options />
 				</div>
 			</div>
 		</div>
 	);
 };
 
-export default products;
+export default Products;

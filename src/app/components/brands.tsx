@@ -210,46 +210,37 @@ const Brands = () => {
 			<div className="flex justify-between items-center py-4">
 				<Pagination>
 					<PaginationContent>
-						<PaginationItem>
-							{!isFirstPage && (
+						{currentPage > 1 && (
+							<PaginationItem>
 								<PaginationPrevious
 									href="#"
-									onClick={(event) => {
-										event.preventDefault();
-										handlePageChange(currentPage - 1);
-									}}
+									onClick={() =>
+										handlePageChange(currentPage - 1)
+									}
 								/>
-							)}
-						</PaginationItem>
-						{[...Array(totalPages)].map((_, index) => (
+							</PaginationItem>
+						)}
+						{Array.from({ length: totalPages }, (_, index) => (
 							<PaginationItem key={index}>
 								<PaginationLink
 									href="#"
-									onClick={(event) => {
-										event.preventDefault();
-										handlePageChange(index + 1);
-									}}
-									className={
-										currentPage === index + 1
-											? "text-blue-500"
-											: ""
-									}
+									onClick={() => handlePageChange(index + 1)}
+									isActive={currentPage === index + 1}
 								>
 									{index + 1}
 								</PaginationLink>
 							</PaginationItem>
 						))}
-						<PaginationItem>
-							{!isLastPage && (
+						{currentPage < totalPages && (
+							<PaginationItem>
 								<PaginationNext
 									href="#"
-									onClick={(event) => {
-										event.preventDefault();
-										handlePageChange(currentPage + 1);
-									}}
+									onClick={() =>
+										handlePageChange(currentPage + 1)
+									}
 								/>
-							)}
-						</PaginationItem>
+							</PaginationItem>
+						)}
 					</PaginationContent>
 				</Pagination>
 			</div>

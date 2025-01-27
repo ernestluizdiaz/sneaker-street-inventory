@@ -55,14 +55,14 @@ const BrandDialog = ({
 
 	const checkIfBrandCodeExists = async (code: string) => {
 		if (code) {
-			// Check if brand code is alphanumeric
+			// Check if brand code contains any characters or is a valid format
 			const alphabeticRegex = /[a-zA-Z]/; // Regex to check for the presence of any alphabetic characters
-			if (alphabeticRegex.test(code)) {
-				setIsBrandCodeExisting(false);
+			if (!alphabeticRegex.test(code) && !/^\d+$/.test(code)) {
 				setBrandCodeErrorMessage(
-					"Brand code should not contain any characters."
+					"Brand code must be alphanumeric or numeric."
 				);
-				return; // Stop further checking if the brand code contains characters
+				setIsBrandCodeExisting(false);
+				return; // Stop further checking if the brand code contains invalid characters
 			}
 
 			// Proceed with checking if the brand code already exists
