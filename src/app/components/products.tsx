@@ -40,6 +40,8 @@ const Products = () => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [products, setProducts] = useState<any[]>([]); // State to store products
 	const [options, setOptions] = useState<Option[]>([]); // State to store options
+	const [editProduct, setEditProduct] = useState<any | null>(null);
+	const [dialogOpen, setDialogOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 
 	useEffect(() => {
@@ -58,6 +60,16 @@ const Products = () => {
 		getProducts();
 		getOptions();
 	}, []);
+
+	const handleEditClick = (product: any) => {
+		setEditProduct(product);
+		setDialogOpen(true);
+	};
+
+	const handleDialogClose = () => {
+		setDialogOpen(false);
+		setEditProduct(null);
+	};
 
 	const getDescription = (optionid: number) => {
 		const option = options.find((opt) => opt.optionid === optionid);
@@ -113,7 +125,7 @@ const Products = () => {
 						<h1 className="font-extrabold text-2xl py-8 sm:pl-3 pl-0">
 							Products
 						</h1>
-						<Dialog>
+						<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 							<DialogTrigger asChild>
 								<button>
 									<Image
@@ -126,9 +138,13 @@ const Products = () => {
 							</DialogTrigger>
 							<DialogContent>
 								<DialogHeader>
-									<DialogTitle>Add Product</DialogTitle>
+									<DialogTitle>
+										{editProduct
+											? "Edit Product"
+											: "Add Product"}
+									</DialogTitle>
 								</DialogHeader>
-								<ProductDialog />
+								<ProductDialog product={editProduct} />
 							</DialogContent>
 						</Dialog>
 					</div>
@@ -206,7 +222,7 @@ const Products = () => {
 								</tr>
 							</thead>
 							<tbody>
-								{products.map((product, index) => (
+								{paginatedProducts.map((product, index) => (
 									<tr
 										key={index}
 										className="bg-white border-b dark:bg-gray-900 dark:border-gray-700"
@@ -217,7 +233,6 @@ const Products = () => {
 										<td className="px-6 py-4">
 											{product.brands?.brandname}
 										</td>
-
 										<td className="px-6 py-4">
 											{product.optiondetails &&
 												product.optiondetails.map(
@@ -235,7 +250,6 @@ const Products = () => {
 													)
 												)}
 										</td>
-
 										<td className="px-6 py-4">
 											{product.optiondetails &&
 												product.optiondetails.map(
@@ -254,14 +268,15 @@ const Products = () => {
 													)
 												)}
 										</td>
-
 										<td className="px-6 py-4">
-											<a
-												href="#"
+											<button
+												onClick={() =>
+													handleEditClick(product)
+												}
 												className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
 											>
 												Edit
-											</a>
+											</button>
 										</td>
 									</tr>
 								))}

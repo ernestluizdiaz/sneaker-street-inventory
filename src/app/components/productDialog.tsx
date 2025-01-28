@@ -1,4 +1,3 @@
-"use client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -16,7 +15,11 @@ interface Options {
 	optionname: string;
 }
 
-const ProductDialog = () => {
+interface ProductDialogProps {
+	product: any; // Add the appropriate type for your product object here
+}
+
+const ProductDialog = ({ product }: ProductDialogProps) => {
 	const [brands, setBrands] = useState<Brands[]>([]);
 	const [options, setOptions] = useState<Options[]>([]);
 	const [productName, setProductName] = useState<string>("");
@@ -48,6 +51,22 @@ const ProductDialog = () => {
 		};
 		fetchData();
 	}, []);
+
+	// Populate the form with product data when editing
+	useEffect(() => {
+		if (product) {
+			setProductName(product.productname);
+			setSelectedBrand(product.brandid);
+			const selectedSku: { [key: number]: string } = {};
+			const selectedOpt: { [key: number]: boolean } = {};
+			product.optiondetails.forEach((option: any) => {
+				selectedSku[option.optionid] = option.sku;
+				selectedOpt[option.optionid] = true;
+			});
+			setSku(selectedSku);
+			setSelectedOptions(selectedOpt);
+		}
+	}, [product]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -86,7 +105,7 @@ const ProductDialog = () => {
 				sku: sku[parseInt(key)], // SKU for the option
 			}));
 
-		// Prepare product data for insertion
+		// Prepare product data for insertion or update
 		const productData = {
 			productname: productName, // Product name
 			brandid: selectedBrand, // Selected brand ID
@@ -94,17 +113,29 @@ const ProductDialog = () => {
 		};
 
 		try {
-			// Insert product into the database
-			const { data, error } = await supabase
-				.from("products")
-				.insert([productData]);
+			let response;
+			if (product && product.productid) {
+				// If editing, update the existing product
+				response = await supabase
+					.from("products")
+					.update(productData)
+					.eq("productid", product.productid); // Use the product ID to find the specific product
+			} else {
+				// If adding a new product, insert it
+				response = await supabase
+					.from("products")
+					.insert([productData]);
+			}
 
+			const { data, error } = response;
 			if (error) throw error;
 
 			// Success notification and form reset
 			toast({
 				title: "Success",
-				description: "Product added successfully!",
+				description: product
+					? "Product updated successfully!"
+					: "Product added successfully!",
 				variant: "default",
 			});
 			setProductName("");
@@ -115,10 +146,10 @@ const ProductDialog = () => {
 				window.location.reload();
 			}, 1000);
 		} catch (error) {
-			console.error("Error inserting product:", error);
+			console.error("Error saving product:", error);
 			toast({
 				title: "Error",
-				description: "Error adding product.",
+				description: "Error saving product.",
 				variant: "destructive",
 			});
 		}
@@ -244,11 +275,12 @@ const ProductDialog = () => {
 								<input
 									type="text"
 									className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-									placeholder="Enter SKU"
 									value={sku[option.optionid] || ""}
 									onChange={(e) =>
 										handleSkuChange(e, option.optionid)
 									}
+									disabled={!selectedOptions[option.optionid]}
+									placeholder="Enter SKU"
 								/>
 							</td>
 						</tr>
@@ -258,7 +290,7 @@ const ProductDialog = () => {
 
 			<DialogFooter className="mt-4">
 				<Button type="submit" onClick={handleSubmit}>
-					Add Product
+					Submit
 				</Button>
 			</DialogFooter>
 		</div>
