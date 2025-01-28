@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import AddIcon from "@/../public/img/icon.png";
 import { fetchProducts } from "@/app/scripts/fetchProducts";
+import { fetchOptions } from "@/app/scripts/fetchOptions";
 import {
 	Pagination,
 	PaginationContent,
@@ -22,10 +23,23 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 
+type Option = {
+	optionid: number;
+	description: string;
+};
+
+type OptionDetail = {
+	options: any;
+	sku: string;
+	optionid: number;
+	optionname: string;
+};
+
 const Products = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [products, setProducts] = useState<any[]>([]); // State to store products
+	const [options, setOptions] = useState<Option[]>([]); // State to store options
 	const [searchQuery, setSearchQuery] = useState("");
 
 	useEffect(() => {
@@ -34,8 +48,21 @@ const Products = () => {
 			const data = await fetchProducts();
 			setProducts(data);
 		};
+
+		// Fetch options from options table
+		const getOptions = async () => {
+			const data = await fetchOptions(); // Replace with actual fetch call
+			setOptions(data);
+		};
+
 		getProducts();
+		getOptions();
 	}, []);
+
+	const getDescription = (optionid: number) => {
+		const option = options.find((opt) => opt.optionid === optionid);
+		return option ? option.description : "No description available";
+	};
 
 	// Handle selection from page size dropdown
 	const handleDropdownSelection = (
@@ -171,7 +198,7 @@ const Products = () => {
 										Option
 									</th>
 									<th scope="col" className="px-6 py-3">
-										SKU
+										Description
 									</th>
 									<th scope="col" className="px-6 py-3">
 										Action
@@ -179,7 +206,7 @@ const Products = () => {
 								</tr>
 							</thead>
 							<tbody>
-								{paginatedProducts.map((product, index) => (
+								{products.map((product, index) => (
 									<tr
 										key={index}
 										className="bg-white border-b dark:bg-gray-900 dark:border-gray-700"
@@ -190,12 +217,44 @@ const Products = () => {
 										<td className="px-6 py-4">
 											{product.brands?.brandname}
 										</td>
+
 										<td className="px-6 py-4">
-											{product.options?.optionname}
+											{product.optiondetails &&
+												product.optiondetails.map(
+													(
+														detail: OptionDetail,
+														idx: number
+													) => (
+														<div key={idx}>
+															<span>
+																{
+																	detail.optionname
+																}
+															</span>
+														</div>
+													)
+												)}
 										</td>
+
 										<td className="px-6 py-4">
-											{product.sku}
+											{product.optiondetails &&
+												product.optiondetails.map(
+													(
+														detail: OptionDetail,
+														idx: number
+													) => (
+														<div key={idx}>
+															<span>
+																{getDescription(
+																	detail.optionid
+																)}{" "}
+																{/* Display description based on optionid */}
+															</span>
+														</div>
+													)
+												)}
 										</td>
+
 										<td className="px-6 py-4">
 											<a
 												href="#"

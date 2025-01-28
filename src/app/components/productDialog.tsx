@@ -52,6 +52,7 @@ const ProductDialog = () => {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
+		// Validate fields
 		if (!productName || !selectedBrand) {
 			toast({
 				title: "Error",
@@ -61,18 +62,12 @@ const ProductDialog = () => {
 			return;
 		}
 
-		const selectedData = Object.keys(selectedOptions)
-			.filter((key) => selectedOptions[parseInt(key)])
-			.map((key) => ({
-				productname: productName,
-				brandid: selectedBrand,
-				optionid: parseInt(key),
-				sku: sku[parseInt(key)],
-			}));
-
-		console.log("Selected Data to Insert:", selectedData); // Log selected data
-
-		if (selectedData.length === 0) {
+		// Ensure at least one option is selected
+		if (
+			Object.keys(selectedOptions).filter(
+				(key) => selectedOptions[parseInt(key)]
+			).length === 0
+		) {
 			toast({
 				title: "Error",
 				description: "Please select at least one option.",
@@ -81,16 +76,32 @@ const ProductDialog = () => {
 			return;
 		}
 
+		// Combine selected options into a JSON object
+		const optionDetails = Object.keys(selectedOptions)
+			.filter((key) => selectedOptions[parseInt(key)]) // Only include selected options
+			.map((key) => ({
+				optionid: parseInt(key), // Option ID
+				optionname: options.find((o) => o.optionid === parseInt(key))
+					?.optionname, // Option name
+				sku: sku[parseInt(key)], // SKU for the option
+			}));
+
+		// Prepare product data for insertion
+		const productData = {
+			productname: productName, // Product name
+			brandid: selectedBrand, // Selected brand ID
+			optiondetails: optionDetails, // JSON object containing options and SKUs
+		};
+
 		try {
+			// Insert product into the database
 			const { data, error } = await supabase
 				.from("products")
-				.insert(selectedData);
-
-			console.log("Supabase Response Data:", data); // Log response data
-			console.log("Supabase Error:", error); // Log error if any
+				.insert([productData]);
 
 			if (error) throw error;
 
+			// Success notification and form reset
 			toast({
 				title: "Success",
 				description: "Product added successfully!",
