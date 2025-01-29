@@ -12,7 +12,7 @@ import {
 	PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
-import DispatchDialog from "@/app/components/dispatchDialog"; // Import your dispatchDialog component
+import ReceivingDialog from "@/app/components/receivingDialog"; // Import your ReceivingDialog component
 import {
 	Dialog,
 	DialogContent,
@@ -58,11 +58,11 @@ const incoming = () => {
 					</DialogTrigger>
 					<DialogContent className="max-w-5xl w-full p-6 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-auto">
 						<DialogHeader>
-							<DialogTitle>Dispatch</DialogTitle>
+							<DialogTitle>Receiving</DialogTitle>
 						</DialogHeader>
 						<div className="space-y-4">
 							{/* Your modal content goes here */}
-							<DispatchDialog />
+							<ReceivingDialog />
 						</div>
 						<DialogFooter>
 							<Button type="submit">Dispatch Items</Button>

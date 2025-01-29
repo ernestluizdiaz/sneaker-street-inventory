@@ -1,15 +1,8 @@
 "use client";
 
 import React from "react";
-import dynamic from "next/dynamic";
-
-const LineChartComponent = dynamic(() => import("@/components/ui/line-chart"), {
-	ssr: false, // Disable server-side rendering
-});
-
-const DropdownButton = dynamic(() => import("../scripts/dashboard"), {
-	ssr: false,
-});
+import LineChartComponent from "@/components/ui/line-chart"; // Static import
+import DropdownButton from "@/app/scripts/dashboard"; // Static import
 
 const Dashboard = () => {
 	return (
@@ -107,7 +100,6 @@ const Dashboard = () => {
 					<p className="text-xs">Order by most sales this month.</p>
 					<div className="flex flex-col mt-10">
 						<div className="flex items-centr justify-between space-x-2 mb-4">
-							{" "}
 							{/* Added mb-4 here for the gap */}
 							<div className="flex items-center space-x-2">
 								<img
