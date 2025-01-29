@@ -89,7 +89,7 @@ const Options = () => {
 				</h1>
 				<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 					<DialogTrigger asChild>
-						<button>
+						<button onClick={() => setEditOption(null)}>
 							<Image
 								src={AddIcon}
 								alt="Add Icon"

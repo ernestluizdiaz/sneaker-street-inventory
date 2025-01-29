@@ -6,7 +6,8 @@ export const fetchProducts = async () => {
       productname,
       brandid,
       brands:brandid(brandname),
-      optiondetails
+      optiondetails,
+			description
     `);
 
 	if (error) {

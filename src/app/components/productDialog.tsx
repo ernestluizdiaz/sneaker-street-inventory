@@ -28,6 +28,7 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 	const [selectedOptions, setSelectedOptions] = useState<{
 		[key: number]: boolean;
 	}>({});
+	const [description, setDescription] = useState<string>(""); // New state for description
 
 	const [selectAll, setSelectAll] = useState(false); // State for "Select All" checkbox
 
@@ -57,6 +58,7 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 		if (product) {
 			setProductName(product.productname);
 			setSelectedBrand(product.brandid);
+			setDescription(product.description || ""); // Populate description field
 			const selectedSku: { [key: number]: string } = {};
 			const selectedOpt: { [key: number]: boolean } = {};
 			product.optiondetails.forEach((option: any) => {
@@ -72,7 +74,7 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 		e.preventDefault();
 
 		// Validate fields
-		if (!productName || !selectedBrand) {
+		if (!productName || !selectedBrand || !description) {
 			toast({
 				title: "Error",
 				description: "Please fill in all fields.",
@@ -110,6 +112,7 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 			productname: productName, // Product name
 			brandid: selectedBrand, // Selected brand ID
 			optiondetails: optionDetails, // JSON object containing options and SKUs
+			description, // New description field
 		};
 
 		try {
@@ -139,6 +142,7 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 				variant: "default",
 			});
 			setProductName("");
+			setDescription(""); // Reset description field
 			setSku({});
 			setSelectedBrand("");
 			setSelectedOptions({});
@@ -230,6 +234,20 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 				</div>
 			</div>
 
+			{/* Description Input */}
+			<div className="mb-4">
+				<Label className="font-bold" htmlFor="description">
+					Description
+				</Label>
+				<textarea
+					id="description"
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+					className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+					placeholder="Enter product description"
+				/>
+			</div>
+
 			<table className="w-full text-sm text-left rtl:text-right text-black dark:text-black">
 				<thead className="text-xs text-black bg-[#e5e5e5] dark:bg-gray-700 dark:text-black">
 					<tr>
@@ -238,7 +256,7 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 								type="checkbox"
 								checked={selectAll}
 								onChange={handleSelectAllChange}
-								className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-full"
+								className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded"
 							/>
 						</th>
 						<th scope="col" className="px-6 py-3">
@@ -253,7 +271,7 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 					{options.map((option) => (
 						<tr
 							key={option.optionid}
-							className="bg-white border-b dark:bg-gray-900 dark:border-gray-700"
+							className="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
 						>
 							<td className="px-6 py-4">
 								<input
@@ -265,21 +283,18 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 									onChange={() =>
 										handleCheckboxChange(option.optionid)
 									}
-									className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-full"
+									className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded"
 								/>
 							</td>
-							<td className="px-6 py-4 font-medium text-black whitespace-nowrap dark:text-white">
-								{option.optionname}
-							</td>
+							<td className="px-6 py-4">{option.optionname}</td>
 							<td className="px-6 py-4">
 								<input
 									type="text"
-									className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
 									value={sku[option.optionid] || ""}
 									onChange={(e) =>
 										handleSkuChange(e, option.optionid)
 									}
-									disabled={!selectedOptions[option.optionid]}
+									className="p-1 border rounded-md w-full"
 									placeholder="Enter SKU"
 								/>
 							</td>
@@ -288,9 +303,9 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 				</tbody>
 			</table>
 
-			<DialogFooter className="mt-4">
-				<Button type="submit" onClick={handleSubmit}>
-					Submit
+			<DialogFooter className="flex justify-end mt-4">
+				<Button onClick={handleSubmit}>
+					{product ? "Update Product" : "Add Product"}
 				</Button>
 			</DialogFooter>
 		</div>

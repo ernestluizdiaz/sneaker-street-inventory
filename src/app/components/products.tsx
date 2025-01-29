@@ -127,7 +127,7 @@ const Products = () => {
 						</h1>
 						<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 							<DialogTrigger asChild>
-								<button>
+								<button onClick={() => setEditProduct(null)}>
 									<Image
 										src={AddIcon}
 										alt="Add Icon"
@@ -235,38 +235,17 @@ const Products = () => {
 										</td>
 										<td className="px-6 py-4">
 											{product.optiondetails &&
-												product.optiondetails.map(
-													(
-														detail: OptionDetail,
-														idx: number
-													) => (
-														<div key={idx}>
-															<span>
-																{
-																	detail.optionname
-																}
-															</span>
-														</div>
+												product.optiondetails
+													.map(
+														(
+															detail: OptionDetail
+														) => detail.optionname
 													)
-												)}
+													.join(", ")}
 										</td>
-										<td className="px-6 py-4">
-											{product.optiondetails &&
-												product.optiondetails.map(
-													(
-														detail: OptionDetail,
-														idx: number
-													) => (
-														<div key={idx}>
-															<span>
-																{getDescription(
-																	detail.optionid
-																)}{" "}
-																{/* Display description based on optionid */}
-															</span>
-														</div>
-													)
-												)}
+
+										<td className="px-6 py-4 font-medium text-black whitespace-nowrap dark:text-white">
+											{product.description}
 										</td>
 										<td className="px-6 py-4">
 											<button
