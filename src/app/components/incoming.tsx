@@ -1,7 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import AddIcon from "@/../public/img/icon.png";
+import { fetchIncoming } from "@/app/scripts/fetchIncoming";
+
 import {
 	Pagination,
 	PaginationContent,
@@ -11,32 +13,90 @@ import {
 	PaginationNext,
 	PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Button } from "@/components/ui/button";
-import ReceivingDialog from "@/app/components/receivingDialog"; // Import your ReceivingDialog component
+import ReceivingDialog from "@/app/components/receivingDialog";
 import {
 	Dialog,
 	DialogContent,
-	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
 
-const incoming = () => {
+const Incoming = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
-	const [stockFilter, setStockFilter] = useState("all"); // State to track stock status
+	const [stockFilter, setStockFilter] = useState("pending");
+	const [searchQuery, setSearchQuery] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
+	const [editIncoming, setEditIncoming] = useState<any | null>(null);
+	const [dialogOpen, setDialogOpen] = useState(false);
 
-	// Handle selection from page size dropdown
+	interface IncomingItem {
+		product: any;
+		incomingid: string;
+		eta: string;
+		deliverystatus: string;
+		incomingdetails: any;
+	}
+
+	const [incomingItems, setIncomingItems] = useState<IncomingItem[]>([]); // State to store incoming data
+
+	useEffect(() => {
+		const fetchData = async () => {
+			const data = await fetchIncoming();
+			setIncomingItems(data);
+		};
+		fetchData();
+	}, []); // Empty array ensures it only runs on component mount
+
 	const handleDropdownSelection = (
 		event: React.ChangeEvent<HTMLSelectElement>
 	) => {
 		setItemsPerPage(Number(event.target.value));
+		setCurrentPage(1); // Reset to first page when items per page changes
 	};
 
-	// Handle selection from stock filter
 	const handleStockFilter = (filter: string) => {
-		// Toggle the selection (unselect if already selected)
-		setStockFilter((prevFilter) => (prevFilter === filter ? "" : filter));
+		setStockFilter((prevFilter) =>
+			prevFilter === filter ? "all" : filter
+		);
+		setCurrentPage(1); // Reset to first page when filter changes
+	};
+	const handleSearchQuery = (event: React.ChangeEvent<HTMLInputElement>) => {
+		setSearchQuery(event.target.value);
+		setCurrentPage(1); // Reset to first page when search query changes
+	};
+
+	const filteredItems = incomingItems.filter((item) => {
+		const matchesSearchQuery =
+			item.product?.productname
+				?.toLowerCase()
+				.includes(searchQuery.toLowerCase()) ||
+			item.product?.brand?.brandname
+				?.toLowerCase()
+				.includes(searchQuery.toLowerCase()) ||
+			item.eta?.toLowerCase().includes(searchQuery.toLowerCase());
+
+		const matchesStockFilter =
+			stockFilter === "all" ||
+			item.deliverystatus.toLowerCase() === stockFilter.toLowerCase();
+
+		return matchesSearchQuery && matchesStockFilter;
+	});
+
+	const paginatedItems = filteredItems.slice(
+		(currentPage - 1) * itemsPerPage,
+		currentPage * itemsPerPage
+	);
+
+	const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+
+	function handlePageChange(pageNumber: number) {
+		setCurrentPage(pageNumber);
+	}
+
+	const handleEditClick = (product: any) => {
+		setEditIncoming(product);
+		setDialogOpen(true);
 	};
 
 	return (
@@ -45,9 +105,9 @@ const incoming = () => {
 				<h1 className="font-extrabold text-2xl py-8 sm:pl-3 pl-0">
 					Incoming
 				</h1>
-				<Dialog>
+				<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
 					<DialogTrigger asChild>
-						<button>
+						<button onClick={() => setEditIncoming(null)}>
 							<Image
 								src={AddIcon}
 								alt="Add Icon"
@@ -56,17 +116,17 @@ const incoming = () => {
 							/>
 						</button>
 					</DialogTrigger>
-					<DialogContent className="max-w-5xl w-full p-6 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-auto">
+					<DialogContent className="max-w-7xl w-full p-6 bg-white dark:bg-gray-800 rounded-md shadow-lg overflow-auto">
 						<DialogHeader>
-							<DialogTitle>Receiving</DialogTitle>
+							<DialogTitle>
+								{editIncoming
+									? "Edit Receiving Incoming"
+									: "Receive Incoming"}
+							</DialogTitle>
 						</DialogHeader>
 						<div className="space-y-4">
-							{/* Your modal content goes here */}
-							<ReceivingDialog />
+							<ReceivingDialog incoming={editIncoming} />
 						</div>
-						<DialogFooter>
-							<Button type="submit">Dispatch Items</Button>
-						</DialogFooter>
 					</DialogContent>
 				</Dialog>
 			</div>
@@ -75,7 +135,6 @@ const incoming = () => {
 			<div className="relative overflow-x-auto px-3">
 				<div className="flex flex-column sm:flex-row flex-wrap space-y-4 sm:space-y-0 items-center justify-between pb-4">
 					<div className="flex space-x-4 items-center">
-						{/* Dropdown for selecting items per page */}
 						<select
 							value={itemsPerPage}
 							onChange={handleDropdownSelection}
@@ -87,12 +146,11 @@ const incoming = () => {
 							<option value={20}>Page Size : 20 items</option>
 						</select>
 
-						{/* Buttons for stock filter */}
 						<div className="inline-flex border border-black rounded-full overflow-hidden">
 							<button
-								onClick={() => handleStockFilter("inStock")}
+								onClick={() => handleStockFilter("pending")}
 								className={`px-6 py-2 text-sm font-medium ${
-									stockFilter === "inStock"
+									stockFilter === "pending"
 										? "bg-blue-500 text-white"
 										: "bg-white text-black"
 								} border-r`}
@@ -100,9 +158,9 @@ const incoming = () => {
 								Pending
 							</button>
 							<button
-								onClick={() => handleStockFilter("outOfStock")}
+								onClick={() => handleStockFilter("ongoing")}
 								className={`px-6 py-2 text-sm font-medium ${
-									stockFilter === "outOfStock"
+									stockFilter === "ongoing"
 										? "bg-blue-500 text-white"
 										: "bg-white text-black"
 								} border-r`}
@@ -122,11 +180,8 @@ const incoming = () => {
 						</div>
 					</div>
 
-					<label htmlFor="table-search" className="sr-only">
-						Search
-					</label>
 					<div className="relative">
-						<div className="absolute inset-y-0 left-0 rtl:inset-r-0 rtl:right-0 flex items-center ps-3 pointer-events-none">
+						<div className="absolute inset-y-0 left-0 flex items-center ps-3 pointer-events-none">
 							<svg
 								className="w-5 h-5 text-black dark:text-black"
 								aria-hidden="true"
@@ -144,6 +199,8 @@ const incoming = () => {
 						<input
 							type="text"
 							id="table-search"
+							value={searchQuery}
+							onChange={handleSearchQuery}
 							className="block p-2 ps-10 text-sm text-black border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
 							placeholder="Search for items"
 						/>
@@ -184,66 +241,139 @@ const incoming = () => {
 						</tr>
 					</thead>
 					<tbody>
-						{/* Example row */}
-						<tr className="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
-							<td className="px-6 py-4 font-medium text-black whitespace-nowrap dark:text-white">
-								Apple MacBook Pro 17"
-							</td>
-							<td className="px-6 py-4">Silver</td>
-							<td className="px-6 py-4">Laptop</td>
-							<td className="px-6 py-4">$2999</td>
-							<td className="px-6 py-4">123456</td>
-							<td className="px-6 py-4">$2500</td>
-							<td className="px-6 py-4">$2999</td>
-							<td className="px-6 py-4">
-								<select
-									className="bg-white border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-									onChange={(e) =>
-										console.log(
-											`Selected status: ${e.target.value}`
-										)
-									}
-									defaultValue="pending" // Set a default value
+						{paginatedItems.length > 0 ? (
+							paginatedItems.map((item) => (
+								<tr
+									key={item.incomingid}
+									className="bg-white border-b dark:bg-gray-900 dark:border-gray-700"
 								>
-									<option value="pending">Pending</option>
-									<option value="ongoing">Ongoing</option>
-									<option value="received">Received</option>
-								</select>
-							</td>
-							<td className="px-6 py-4">
-								<a
-									href="#"
-									className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-								>
-									Edit
-								</a>
-							</td>
-						</tr>
-						{/* Add more rows here */}
+									{/* Incoming ID */}
+									<td className="px-6 py-4 font-medium text-black whitespace-nowrap dark:text-white">
+										{item.incomingid}
+									</td>
+
+									{/* Item */}
+									<td className="px-6 py-4">
+										{item.product?.productname}
+									</td>
+
+									{/* Brand */}
+									<td className="px-6 py-4">
+										{item.product?.brand?.brandname}
+									</td>
+
+									{/* Option */}
+									<td className="px-6 py-4">
+										{item.incomingdetails
+											.map(
+												(detail: { optionname: any }) =>
+													detail.optionname
+											)
+											.join(", ")}
+									</td>
+
+									{/* SKU */}
+									<td className="px-6 py-4">
+										{item.incomingdetails
+											.map(
+												(detail: { sku: any }) =>
+													detail.sku
+											)
+											.join(", ")}
+									</td>
+
+									{/* Supplier Cost */}
+									<td className="px-6 py-4">
+										{item.incomingdetails
+											.map(
+												(detail: {
+													suppliercost: any;
+												}) =>
+													detail.suppliercost
+														? `₱${Number(
+																detail.suppliercost
+														  ).toLocaleString()}` // Add peso sign before the formatted number
+														: ""
+											)
+											.join(", ")}
+									</td>
+
+									{/* ETA */}
+									<td className="px-6 py-4">
+										{new Date(item.eta).toLocaleDateString(
+											"en-US",
+											{
+												month: "2-digit",
+												day: "2-digit",
+												year: "2-digit",
+											}
+										)}
+									</td>
+
+									{/* Delivery Status */}
+									<td className="px-6 py-4">
+										{item.deliverystatus}
+									</td>
+
+									<td className="px-6 py-4">
+										<a
+											href="#"
+											onClick={() =>
+												handleEditClick(item)
+											}
+											className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+										>
+											Edit
+										</a>
+									</td>
+								</tr>
+							))
+						) : (
+							<tr>
+								<td colSpan={9} className="text-center py-4">
+									No data available
+								</td>
+							</tr>
+						)}
 					</tbody>
 				</table>
 			</div>
+
+			{/* Pagination */}
 			<div className="flex justify-between items-center py-4">
 				<Pagination>
 					<PaginationContent>
-						<PaginationItem>
-							<PaginationPrevious href="#" />
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationLink href="#">1</PaginationLink>
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationLink href="#">2</PaginationLink>
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationLink href="#">3</PaginationLink>
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationEllipsis />
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationNext href="#" />
-						</PaginationItem>
+						{currentPage > 1 && (
+							<PaginationItem>
+								<PaginationPrevious
+									href="#"
+									onClick={() =>
+										handlePageChange(currentPage - 1)
+									}
+								/>
+							</PaginationItem>
+						)}
+						{Array.from({ length: totalPages }, (_, index) => (
+							<PaginationItem key={index}>
+								<PaginationLink
+									href="#"
+									onClick={() => handlePageChange(index + 1)}
+									isActive={currentPage === index + 1}
+								>
+									{index + 1}
+								</PaginationLink>
+							</PaginationItem>
+						))}
+						{currentPage < totalPages && (
+							<PaginationItem>
+								<PaginationNext
+									href="#"
+									onClick={() =>
+										handlePageChange(currentPage + 1)
+									}
+								/>
+							</PaginationItem>
+						)}
 					</PaginationContent>
 				</Pagination>
 			</div>
@@ -251,4 +381,4 @@ const incoming = () => {
 	);
 };
 
-export default incoming;
+export default Incoming;
