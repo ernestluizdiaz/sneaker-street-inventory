@@ -120,7 +120,7 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 			console.log("This data:", incoming);
 			setSelectedProduct(incoming.product.productname); // Pre-fill the product name
 
-			// Pre-fill the selected options
+			// Extract selected option IDs from incoming.incomingdetails
 			const selectedOptionIds = incoming.incomingdetails.map(
 				(detail: { optionid: any }) => detail.optionid
 			);
@@ -131,7 +131,7 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 				deliverystatus: incoming.deliverystatus || "Pending",
 			});
 
-			// Find the selected product correctly
+			// Find the selected product
 			const selectedProduct = products.find(
 				(product) =>
 					product.productname === incoming.product.productname
@@ -140,7 +140,7 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 			if (selectedProduct) {
 				setOptions(selectedProduct.optiondetails);
 
-				// Ensure selected options are updated
+				// If no selected options, set the first option by default
 				if (selectedOptionIds.length === 0) {
 					const defaultOption = selectedProduct.optiondetails.find(
 						(option: { optionid: any }) =>
@@ -152,10 +152,17 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 					);
 				}
 
-				// Update the selected SKU for each option and pre-fill the sku
+				// Match optionid from incoming.incomingdetails to the correct SKU in optiondetails
 				const selectedSKUs = incoming.incomingdetails.reduce(
 					(acc: any, detail: any) => {
-						acc[detail.optionid] = detail.sku;
+						const matchedOption =
+							selectedProduct.optiondetails.find(
+								(option: { optionid: any }) =>
+									option.optionid === detail.optionid
+							);
+						acc[detail.optionid] = matchedOption
+							? matchedOption.sku
+							: "No SKU"; // Default value if no match
 						return acc;
 					},
 					{}
@@ -163,7 +170,7 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 				setSelectedSKU(selectedSKUs);
 			}
 
-			// Pre-fill the supplier cost, incoming qty, landed cost, and gross price
+			// Pre-fill supplier cost, incoming qty, landed cost, and gross price
 			const detailsMap: { [key: string]: any } = {};
 			incoming.incomingdetails.forEach((detail: any) => {
 				detailsMap[detail.optionid] = {
@@ -186,90 +193,107 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 			deliverystatus: (
 				document.getElementById("deliverystatus") as HTMLSelectElement
 			)?.value,
-			incomingdetails: selectedOptions.map((optionId) => {
-				const option = options.find((opt) => opt.optionid === optionId); // Get the option object
-				return {
-					productname: selectedProduct,
-					optionid: optionId,
-					optionname: option ? option.optionname : "", // Option name for each selected option
-					sku: selectedSKU[optionId], // Pass SKU for the selected option
-					suppliercost: (
-						document.getElementById(
-							`suppliercost-${optionId}`
-						) as HTMLInputElement
-					)?.value,
-					incomingqty: (
-						document.getElementById(
-							`incomingqty-${optionId}`
-						) as HTMLInputElement
-					)?.value,
-					grossprice: (
-						document.getElementById(
-							`grossprice-${optionId}`
-						) as HTMLInputElement
-					)?.value,
-					landedcost: (
-						document.getElementById(
-							`landedcost-${optionId}`
-						) as HTMLInputElement
-					)?.value,
-				};
-			}),
+			incomingdetails: selectedOptions.map((optionId) => ({
+				optionid: optionId,
+				suppliercost: (
+					document.getElementById(
+						`suppliercost-${optionId}`
+					) as HTMLInputElement
+				)?.value,
+				incomingqty: (
+					document.getElementById(
+						`incomingqty-${optionId}`
+					) as HTMLInputElement
+				)?.value,
+				grossprice: (
+					document.getElementById(
+						`grossprice-${optionId}`
+					) as HTMLInputElement
+				)?.value,
+				landedcost: (
+					document.getElementById(
+						`landedcost-${optionId}`
+					) as HTMLInputElement
+				)?.value,
+			})),
 		};
 
 		try {
-			if (incomingDetails.incomingid) {
-				// Update existing product
-				const { data, error } = await supabase
+			let transactionSuccessful = false;
+			let incomingid = incomingDetails.incomingid; // Store incoming ID
+
+			if (incomingid) {
+				// Update existing incoming product
+				const { error } = await supabase
 					.from("incoming")
 					.update(incomingData)
-					.eq("incomingid", incomingDetails.incomingid);
+					.eq("incomingid", incomingid);
 
-				if (error) {
-					throw error;
+				if (error) throw error;
+				transactionSuccessful = true;
+			} else {
+				// Insert new incoming product and retrieve its ID
+				const { data, error } = await supabase
+					.from("incoming")
+					.insert([incomingData])
+					.select("incomingid") // Get the inserted ID
+					.single();
+
+				if (error) throw error;
+				incomingid = data.incomingid;
+				transactionSuccessful = true;
+			}
+
+			if (
+				transactionSuccessful &&
+				incomingData.deliverystatus === "Received"
+			) {
+				for (const detail of incomingData.incomingdetails) {
+					const { error: inventoryError } = await supabase
+						.from("inventory")
+						.insert([
+							{
+								incomingid: incomingid,
+								optionid: detail.optionid,
+								onhandqty: detail.incomingqty,
+								availableqty: detail.incomingqty,
+							},
+						]);
+
+					if (inventoryError) {
+						console.error(
+							"Error inserting into inventory:",
+							inventoryError
+						);
+						toast({
+							title: "Error",
+							description: "Failed to move product to inventory",
+							variant: "destructive",
+						});
+						return;
+					}
 				}
 
+				toast({
+					title: "Product moved to inventory",
+					description:
+						"Your product has been successfully added to inventory.",
+					variant: "default",
+				});
+			} else {
 				toast({
 					title: "Success",
 					description: "Incoming product updated successfully",
 					variant: "default",
 				});
-
-				// Wait for the toast to be shown before reloading
-				setTimeout(() => {
-					window.location.reload();
-				}, 1000);
-			} else {
-				// Insert new product
-				const { data, error } = await supabase
-					.from("incoming")
-					.insert([incomingData]);
-
-				if (error) {
-					// Show error toast if insert fails
-					toast({
-						title: "Error",
-						description: "Error adding incoming product",
-						variant: "destructive",
-					});
-					return; // Exit the function if there's an error
-				}
-
-				// Show success toast only if insert succeeds
-				toast({
-					title: "Success",
-					description: "Product added successfully",
-					variant: "default",
-				});
-
-				// Wait for the toast to be shown before reloading
-				setTimeout(() => {
-					window.location.reload();
-				}, 1000);
 			}
+
+			// Wait for the toast to be shown before reloading
+			setTimeout(() => {
+				window.location.reload();
+			}, 1000);
 		} catch (error) {
-			// Catch and display any other errors
-			console.error("Error handling product:", error); // Log the actual error
+			console.error("Error handling product:", error);
 			toast({
 				title: "Error",
 				description:
@@ -327,9 +351,10 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 							className="w-full p-1 border mt-1 rounded-md text-sm bg-gray-100 text-black dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
 							value={incomingDetails.deliverystatus || "Pending"} // Set the value dynamically
 							onChange={(e) => {
+								const selectedStatus = e.target.value;
 								setIncomingDetails({
 									...incomingDetails,
-									deliverystatus: e.target.value,
+									deliverystatus: selectedStatus,
 								});
 							}}
 						>
@@ -353,10 +378,10 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 							SKU
 						</th>
 						<th scope="col" className="px-6 py-3">
-							Supplier Cost
+							Incoming QTY
 						</th>
 						<th scope="col" className="px-6 py-3">
-							Incoming QTY
+							Supplier Cost
 						</th>
 						<th scope="col" className="px-6 py-3">
 							Landed Cost (Per Unit)
@@ -450,41 +475,6 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 								: "Select Option"}
 						</td>
 
-						{/* Supplier Cost */}
-						<td className="px-6 py-4">
-							{selectedOptions.map((optionId) => {
-								const selectedOption = options.find(
-									(option) => option.optionid === optionId
-								);
-								return (
-									<input
-										key={`suppliercost-${optionId}`}
-										id={`suppliercost-${optionId}`}
-										value={
-											incomingDetailsMap[optionId]
-												?.suppliercost || ""
-										}
-										onChange={(e) =>
-											setIncomingDetailsMap((prev) => ({
-												...prev,
-												[optionId]: {
-													...prev[optionId],
-													suppliercost:
-														e.target.value,
-												},
-											}))
-										}
-										type="number"
-										placeholder={`Supplier Cost for ${
-											selectedOption?.optionname ||
-											optionId
-										}`}
-										className="w-full p-2 mb-1 border rounded-md text-sm bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-									/>
-								);
-							})}
-						</td>
-
 						{/* Incoming QTY */}
 						<td className="px-6 py-4">
 							{selectedOptions.map((optionId) => {
@@ -514,6 +504,41 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 											optionId
 										}`}
 										required
+										className="w-full p-2 mb-1 border rounded-md text-sm bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+									/>
+								);
+							})}
+						</td>
+
+						{/* Supplier Cost */}
+						<td className="px-6 py-4">
+							{selectedOptions.map((optionId) => {
+								const selectedOption = options.find(
+									(option) => option.optionid === optionId
+								);
+								return (
+									<input
+										key={`suppliercost-${optionId}`}
+										id={`suppliercost-${optionId}`}
+										value={
+											incomingDetailsMap[optionId]
+												?.suppliercost || ""
+										}
+										onChange={(e) =>
+											setIncomingDetailsMap((prev) => ({
+												...prev,
+												[optionId]: {
+													...prev[optionId],
+													suppliercost:
+														e.target.value,
+												},
+											}))
+										}
+										type="number"
+										placeholder={`Supplier Cost for ${
+											selectedOption?.optionname ||
+											optionId
+										}`}
 										className="w-full p-2 mb-1 border rounded-md text-sm bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
 									/>
 								);

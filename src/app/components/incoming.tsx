@@ -31,6 +31,8 @@ const Incoming = () => {
 	const [dialogOpen, setDialogOpen] = useState(false);
 
 	interface IncomingItem {
+		optionname: string;
+		sku: string;
 		product: any;
 		incomingid: string;
 		eta: string;
@@ -44,6 +46,7 @@ const Incoming = () => {
 		const fetchData = async () => {
 			const data = await fetchIncoming();
 			setIncomingItems(data);
+			console.log(data);
 		};
 		fetchData();
 	}, []); // Empty array ensures it only runs on component mount
@@ -262,24 +265,14 @@ const Incoming = () => {
 										{item.product?.brand?.brandname}
 									</td>
 
-									{/* Option */}
+									{/* Option Name (from optionid) */}
 									<td className="px-6 py-4">
-										{item.incomingdetails
-											.map(
-												(detail: { optionname: any }) =>
-													detail.optionname
-											)
-											.join(", ")}
+										{item.optionname || "N/A"}
 									</td>
 
 									{/* SKU */}
 									<td className="px-6 py-4">
-										{item.incomingdetails
-											.map(
-												(detail: { sku: any }) =>
-													detail.sku
-											)
-											.join(", ")}
+										{item.sku || "N/A"}
 									</td>
 
 									{/* Supplier Cost */}

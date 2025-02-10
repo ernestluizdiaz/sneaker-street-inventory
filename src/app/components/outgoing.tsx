@@ -1,20 +1,14 @@
 "use client";
-import React, { useState } from "react";
-import Image from "next/image";
-import AddIcon from "@/../public/img/icon.png";
-import {
-	Pagination,
-	PaginationContent,
-	PaginationEllipsis,
-	PaginationItem,
-	PaginationLink,
-	PaginationNext,
-	PaginationPrevious,
-} from "@/components/ui/pagination";
+import React, { useEffect, useState } from "react";
+import { fetchOutgoing } from "../scripts/fetchOutgoing";
+import supabase from "@/config/supabase";
 
-const outgoing = () => {
+const Outgoing = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
-	const [stockFilter, setStockFilter] = useState("all"); // State to track stock status
+	const [stockFilter, setStockFilter] = useState("all");
+	const [outgoing, setOutgoing] = useState<any[]>([]);
+	const [editIndex, setEditIndex] = useState<number | null>(null);
+	const [editStatus, setEditStatus] = useState<string>("");
 
 	// Handle selection from page size dropdown
 	const handleDropdownSelection = (
@@ -27,6 +21,33 @@ const outgoing = () => {
 	const handleStockFilter = (filter: string) => {
 		// Toggle the selection (unselect if already selected)
 		setStockFilter((prevFilter) => (prevFilter === filter ? "" : filter));
+	};
+
+	useEffect(() => {
+		const fetchData = async () => {
+			const data = await fetchOutgoing();
+			setOutgoing(data);
+			console.log(data);
+		};
+		fetchData();
+	}, []);
+
+	const handleEditClick = (index: number, currentStatus: string) => {
+		setEditIndex(index);
+		setEditStatus(currentStatus);
+	};
+
+	const handleStatusChange = (
+		event: React.ChangeEvent<HTMLSelectElement>
+	) => {
+		setEditStatus(event.target.value);
+	};
+
+	const handleSaveClick = (index: number) => {
+		const updatedOutgoing = [...outgoing];
+		updatedOutgoing[index].deliverystatus = editStatus;
+		setOutgoing(updatedOutgoing);
+		setEditIndex(null);
 	};
 
 	return (
@@ -56,9 +77,9 @@ const outgoing = () => {
 						{/* Buttons for stock filter */}
 						<div className="inline-flex border border-black rounded-full overflow-hidden">
 							<button
-								onClick={() => handleStockFilter("inStock")}
+								onClick={() => handleStockFilter("pending")}
 								className={`px-6 py-2 text-sm font-medium ${
-									stockFilter === "inStock"
+									stockFilter === "pending"
 										? "bg-blue-500 text-white"
 										: "bg-white text-black"
 								} border-r`}
@@ -66,9 +87,9 @@ const outgoing = () => {
 								Pending
 							</button>
 							<button
-								onClick={() => handleStockFilter("outOfStock")}
+								onClick={() => handleStockFilter("ongoing")}
 								className={`px-6 py-2 text-sm font-medium ${
-									stockFilter === "outOfStock"
+									stockFilter === "ongoing"
 										? "bg-blue-500 text-white"
 										: "bg-white text-black"
 								} border-r`}
@@ -136,85 +157,126 @@ const outgoing = () => {
 								SKU
 							</th>
 							<th scope="col" className="px-6 py-3">
+								Dispatch Qty
+							</th>
+							<th scope="col" className="px-6 py-3">
 								Sold Price
+							</th>
+							<th scope="col" className="px-6 py-3">
+								Status
 							</th>
 							<th scope="col" className="px-6 py-3">
 								Courier
 							</th>
-							<th scope="col" className="px-6 py-3">
-								Delivery Status
-							</th>
+							<th>Date</th>
+
 							<th scope="col" className="px-6 py-3">
 								Action
 							</th>
 						</tr>
 					</thead>
 					<tbody>
-						{/* Example row */}
-						<tr className="bg-white border-b dark:bg-gray-900 dark:border-gray-700">
-							<td className="px-6 py-4 font-medium text-black whitespace-nowrap dark:text-white">
-								Apple MacBook Pro 17"
-							</td>
-							<td className="px-6 py-4">Silver</td>
-							<td className="px-6 py-4">Laptop</td>
-							<td className="px-6 py-4">$2999</td>
-							<td className="px-6 py-4">123456</td>
-							<td className="px-6 py-4">$2500</td>
-							<td className="px-6 py-4">$2999</td>
-							<td className="px-6 py-4">
-								<select
-									className="bg-white border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-									onChange={(e) =>
-										console.log(
-											`Selected status: ${e.target.value}`
-										)
-									}
-									defaultValue="pending" // Set a default value
+						{outgoing.map((item: any, index: number) => {
+							const outgoingDetail =
+								item.incoming.incomingdetails.find(
+									(detail: any) =>
+										detail.optionid === item.optionid
+								);
+
+							const matchedOption =
+								item.incoming.product.optiondetails.find(
+									(opt: any) => opt.optionid === item.optionid
+								);
+
+							return (
+								<tr
+									key={item.outgoingid}
+									className="bg-white border-b dark:bg-gray-900 dark:border-gray-700"
 								>
-									<option value="pending">Pending</option>
-									<option value="ongoing">Ongoing</option>
-									<option value="received">Received</option>
-								</select>
-							</td>
-							<td className="px-6 py-4">
-								<a
-									href="#"
-									className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
-								>
-									Edit
-								</a>
-							</td>
-						</tr>
-						{/* Add more rows here */}
+									<td className="px-6 py-4 font-medium text-black whitespace-nowrap dark:text-white">
+										{item.outgoingid}
+									</td>
+									<td className="px-6 py-4">
+										{item.incoming.product.productname}
+									</td>
+									<td className="px-6 py-4">
+										{item.incoming.product.brand.brandname}
+									</td>
+									<td className="px-6 py-4">
+										{matchedOption
+											? matchedOption.optionname
+											: "N/A"}
+									</td>
+									<td className="px-6 py-4">
+										{matchedOption
+											? matchedOption.sku
+											: "N/A"}
+									</td>
+									<td className="px-6 py-4">
+										{item.dispatchquantity}
+									</td>
+									<td className="px-6 py-4">
+										{item.soldprice}
+									</td>
+									<td className="px-6 py-4">
+										{editIndex === index ? (
+											<select
+												value={editStatus || ""}
+												onChange={handleStatusChange}
+												className="text-black bg-white border border-gray-300 focus:outline-none focus:ring-1 focus:ring-black font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-white dark:border-black dark:focus:ring-black"
+											>
+												<option value="pending">
+													Pending
+												</option>
+												<option value="ongoing">
+													Ongoing
+												</option>
+												<option value="received">
+													Received
+												</option>
+											</select>
+										) : (
+											item.deliverystatus || "N/A"
+										)}
+									</td>
+									<td className="px-6 py-4"></td>
+									<td>
+										{new Date(item.date).toLocaleString(
+											"en-US"
+										)}
+									</td>
+									<td className="px-6 py-4">
+										{editIndex === index ? (
+											<button
+												onClick={() =>
+													handleSaveClick(index)
+												}
+											>
+												Save
+											</button>
+										) : (
+											<button
+												onClick={() =>
+													handleEditClick(
+														index,
+														item.deliverystatus
+													)
+												}
+											>
+												Edit
+											</button>
+										)}
+									</td>
+								</tr>
+							);
+						})}
 					</tbody>
 				</table>
-			</div>
-			<div className="flex justify-between items-center py-4">
-				<Pagination>
-					<PaginationContent>
-						<PaginationItem>
-							<PaginationPrevious href="#" />
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationLink href="#">1</PaginationLink>
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationLink href="#">2</PaginationLink>
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationLink href="#">3</PaginationLink>
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationEllipsis />
-						</PaginationItem>
-						<PaginationItem>
-							<PaginationNext href="#" />
-						</PaginationItem>
-					</PaginationContent>
-				</Pagination>
+
+				{/* Pagination */}
 			</div>
 		</div>
 	);
 };
 
-export default outgoing;
+export default Outgoing;
