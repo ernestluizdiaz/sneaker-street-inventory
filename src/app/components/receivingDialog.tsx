@@ -12,7 +12,7 @@ interface IncomingDialogProps {
 	incoming: any;
 }
 
-const receivingDialog = ({ incoming }: IncomingDialogProps) => {
+const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 	interface Product {
 		productid: any;
 		productname: any;
@@ -625,4 +625,4 @@ const receivingDialog = ({ incoming }: IncomingDialogProps) => {
 	);
 };
 
-export default receivingDialog;
+export default ReceivingDialog;
