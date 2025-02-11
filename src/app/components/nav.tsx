@@ -4,49 +4,69 @@ import Link from "next/link";
 import Image from "next/image";
 import Logo from "../../../public/img/logo.png";
 import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import supabase from "@/config/supabase";
 
 export default function Nav() {
 	const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [isUserMenuOpen, setUserMenuOpen] = useState(false);
 	const router = useRouter();
-	// Toggle mobile menu
+	const pathname = usePathname();
+
 	const handleMobileMenuToggle = () => {
 		setMobileMenuOpen(!isMobileMenuOpen);
 	};
 
-	// Toggle user menu
 	const handleUserMenuToggle = () => {
 		setUserMenuOpen(!isUserMenuOpen);
 	};
 
-	// useEffect to handle adding font-bold class to active links
+	useEffect(() => {
+		if (isMobileMenuOpen || isUserMenuOpen) {
+			const handleClickOutside = (event: MouseEvent) => {
+				if (
+					event.target &&
+					!(event.target as Element).closest("#mobile-menu") &&
+					!(event.target as Element).closest("#user-menu-button")
+				) {
+					setMobileMenuOpen(false);
+					setUserMenuOpen(false);
+				}
+			};
+
+			document.addEventListener("mousedown", handleClickOutside);
+			return () => {
+				document.removeEventListener("mousedown", handleClickOutside);
+			};
+		}
+	}, [isMobileMenuOpen, isUserMenuOpen]);
+
 	useEffect(() => {
 		const links = document.querySelectorAll("a[href]");
 
-		// Set the default link (Dashboard) to have the font-bold class on page load
+		// Function to handle clicks and update styles
+		const handleLinkClick = (event: Event) => {
+			links.forEach((link) => link.classList.remove("font-bold"));
+			(event.currentTarget as HTMLElement).classList.add("font-bold");
+		};
+
+		// Attach event listeners to all links
 		links.forEach((link) => {
-			if (link.textContent?.trim() === "Dashboard") {
+			link.addEventListener("click", handleLinkClick);
+
+			// Ensure the current active page is bold
+			if (link.getAttribute("href") === pathname) {
 				link.classList.add("font-bold");
 			}
-
-			link.addEventListener("click", () => {
-				// Remove font-bold class from all links
-				links.forEach((item) => item.classList.remove("font-bold"));
-				// Add font-bold class to the clicked link
-				link.classList.add("font-bold");
-			});
 		});
 
-		// Make the Dashboard link bold when the logo is clicked
+		// Attach event listener to logo click
 		const logoLink = document.querySelector('a[href="/dashboard"]');
 		if (logoLink) {
 			logoLink.addEventListener("click", () => {
-				// Remove font-bold class from all links
-				links.forEach((item) => item.classList.remove("font-bold"));
-				// Add font-bold class to the Dashboard link
+				links.forEach((link) => link.classList.remove("font-bold"));
 				const dashboardLink = Array.from(links).find(
-					(link) => link.textContent?.trim() === "Dashboard"
+					(link) => link.getAttribute("href") === "/dashboard"
 				);
 				if (dashboardLink) {
 					dashboardLink.classList.add("font-bold");
@@ -54,13 +74,16 @@ export default function Nav() {
 			});
 		}
 
-		// Cleanup event listeners on unmount
+		// Cleanup event listeners
 		return () => {
-			links.forEach((link) => {
-				link.removeEventListener("click", () => {});
-			});
+			links.forEach((link) =>
+				link.removeEventListener("click", handleLinkClick)
+			);
+			if (logoLink) {
+				logoLink.removeEventListener("click", () => {});
+			}
 		};
-	}, []); // Empty dependency array to run only once when the component mounts
+	}, [pathname]);
 
 	const handleSignOut = async () => {
 		await supabase.auth.signOut();
@@ -97,22 +120,27 @@ export default function Nav() {
 									d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
 								/>
 							</svg>
-							<svg
-								className={
-									isMobileMenuOpen ? "block size-6" : "hidden"
-								}
-								fill="none"
-								viewBox="0 0 24 24"
-								strokeWidth="1.5"
-								stroke="currentColor"
-								aria-hidden="true"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									d="M6 18 18 6M6 6l12 12"
-								/>
-							</svg>
+							{isMobileMenuOpen && (
+								<>
+									<span className="sr-only">
+										Close main menu
+									</span>
+									<svg
+										className="block size-6"
+										fill="none"
+										viewBox="0 0 24 24"
+										strokeWidth="1.5"
+										stroke="currentColor"
+										aria-hidden="true"
+									>
+										<path
+											strokeLinecap="round"
+											strokeLinejoin="round"
+											d="M6 18 18 6M6 6l12 12"
+										/>
+									</svg>
+								</>
+							)}
 						</button>
 					</div>
 
@@ -167,7 +195,7 @@ export default function Nav() {
 									Products
 								</Link>
 								<Link
-									href="#"
+									href="/settings"
 									className="rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700 hover:text-white"
 								>
 									Settings
@@ -213,26 +241,17 @@ export default function Nav() {
 								tabIndex={-1}
 							>
 								<Link
-									href="#"
-									className="block px-4 py-2 text-sm text-gray-700"
-									role="menuitem"
-									tabIndex={-1}
-									id="user-menu-item-0"
-								>
-									Your Profile
-								</Link>
-								<Link
-									href="#"
-									className="block px-4 py-2 text-sm text-gray-700"
-									role="menuitem"
-									tabIndex={-1}
-									id="user-menu-item-1"
-								>
-									Settings
-								</Link>
-								<Link
-									onClick={handleSignOut}
-									className="block px-4 py-2 text-sm text-gray-700"
+									onClick={() => {
+										handleSignOut();
+										const links =
+											document.querySelectorAll(
+												"a[href]"
+											);
+										links.forEach((item) =>
+											item.classList.remove("font-bold")
+										);
+									}}
+									className="block px-4 py-2 text-sm text-red-700 hover:bg-gray-100 hover:text-red-900"
 									role="menuitem"
 									tabIndex={-1}
 									id="user-menu-item-2"
@@ -284,7 +303,7 @@ export default function Nav() {
 						Products
 					</Link>
 					<Link
-						href="#"
+						href="/settings"
 						className="block rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
 					>
 						Settings
