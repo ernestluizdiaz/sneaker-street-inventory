@@ -181,8 +181,8 @@ const Settings = () => {
 									Team Member Information
 								</h2>
 								<p className="text-gray-600 text-sm">
-									Manage the roles and access levels of your
-									team members.
+									Create an account to manage the roles and
+									access levels of your team members.
 								</p>
 							</div>
 

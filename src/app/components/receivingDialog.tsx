@@ -7,122 +7,134 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import { useToast } from "@/hooks/use-toast";
+import { parse } from "path";
+
+interface Option {
+	optionid: string;
+	optionname: string;
+	sku: string;
+}
+
+interface Product {
+	productid: string;
+	productname: string;
+	optiondetails: Option[];
+}
+
+interface IncomingDetail {
+	optionid: string;
+	suppliercost: number;
+	incomingqty: number;
+	landedcost: number;
+	grossprice: number;
+}
+
+interface IncomingItem {
+	optionname: string;
+	sku: string;
+	product: Product;
+	incomingid: string;
+	remarks: string;
+	eta: string;
+	deliverystatus: string;
+	incomingdetails: IncomingDetail[];
+}
 
 interface IncomingDialogProps {
-	incoming: any;
+	incoming?: IncomingItem | null;
 }
 
 const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
-	interface Product {
-		productid: any;
-		productname: any;
-		optiondetails: any;
-	}
-
 	const [products, setProducts] = useState<Product[]>([]);
-	const [options, setOptions] = useState<any[]>([]);
-	const [selectedProduct, setSelectedProduct] = useState<string>(""); // Store selected product name
-	const [selectedOptions, setSelectedOptions] = useState<any[]>([]); // Store selected options
-	const [selectedSKU, setSelectedSKU] = useState<string>("");
-	const [incomingDetails, setIncomingDetails] = useState<any>({}); // Object to store incoming details
-	const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false); // State to manage dropdown open/close
-	const [incomingDetailsMap, setIncomingDetailsMap] = useState<{
-		[key: string]: any;
-	}>({});
+	const [options, setOptions] = useState<Option[]>([]);
+	const [selectedProduct, setSelectedProduct] = useState<string>("");
+	const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+	const [selectedSKU, setSelectedSKU] = useState<{ [key: string]: string }>(
+		{}
+	);
+	const [incomingDetails, setIncomingDetails] = useState<
+		Partial<IncomingItem>
+	>({});
+	const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+	const [incomingDetailsMap, setIncomingDetailsMap] = useState<
+		Record<string, IncomingDetail>
+	>({});
 	const { toast } = useToast();
 
-	// Fetch products on component mount and set the products state with the data
 	useEffect(() => {
-		fetchProducts().then((data) => {
-			setProducts(data);
-		});
+		fetchProducts().then((data) => setProducts(data));
 	}, []);
 
-	// If product selected, display the Options
 	const handleProductChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
 		const productName = e.target.value;
-		console.log("Selected Product Name:", productName);
-
-		// Find the selected product by name
 		const selectedProduct = products.find(
 			(product) => product.productname === productName
 		);
 
-		// If a product is selected, update the options state and log optiondetails
 		if (selectedProduct) {
-			console.log(
-				"Option Details for Product Name:",
-				productName,
-				selectedProduct.optiondetails
-			);
-			setOptions(selectedProduct.optiondetails); // Update the options state
-			setSelectedProduct(selectedProduct.productname); // Set the selected product name
-			setSelectedOptions([]); // Reset selected options when product changes
-			console.log("Selected Product:", selectedProduct.productname);
-
-			// Update incoming details with the corresponding productid
-			setIncomingDetails({
-				...incomingDetails,
-				productid: selectedProduct.productid,
-				productname: selectedProduct.productname,
-			});
-		} else {
-			console.log("Product not found");
+			setOptions(selectedProduct.optiondetails);
+			setSelectedProduct(selectedProduct.productname);
+			setSelectedOptions([]);
+			setIncomingDetails((prevDetails) => ({
+				...prevDetails,
+				product: {
+					...(prevDetails.product || {}),
+					productid: selectedProduct.productid, // ✅ Corrected
+					productname: selectedProduct.productname,
+					optiondetails: selectedProduct.optiondetails || [],
+				},
+			}));
 		}
 	};
 
-	// If Option selected, display the SKU
-	const handleOptionChange = (optionId: any) => {
+	const handleOptionChange = (optionId: string) => {
 		const selectedOption = options.find(
 			(option) => option.optionid === optionId
 		);
-
 		if (selectedOption) {
-			const isSelected = selectedOptions.includes(optionId);
-			const newSelectedOptions = isSelected
+			const newSelectedOptions = selectedOptions.includes(optionId)
 				? selectedOptions.filter((id) => id !== optionId)
 				: [...selectedOptions, optionId];
 
 			setSelectedOptions(newSelectedOptions);
-			console.log("Selected Options:", newSelectedOptions);
 
-			// Update the selected SKU for each option, ensuring it's stored individually for each option
 			const newSelectedSKUs = newSelectedOptions.reduce(
-				(acc: any, optionId) => {
+				(acc: Record<string, string>, optionId) => {
 					const option = options.find(
 						(opt) => opt.optionid === optionId
 					);
 					if (option) {
-						acc[optionId] = option.sku; // Store SKU for each selected option
+						acc[optionId] = option.sku;
 					}
 					return acc;
 				},
 				{}
 			);
 
-			setSelectedSKU(newSelectedSKUs); // Update selected SKUs with the new structure
+			setSelectedSKU(newSelectedSKUs);
 
-			// Update incoming details to include selected option names and their respective SKUs
-			const newOptionNames = newSelectedOptions.map(
-				(id) =>
-					options.find((option) => option.optionid === id)?.optionname
-			);
-			setIncomingDetails((prevDetails: any) => ({
+			const newOptionNames = newSelectedOptions
+				.map(
+					(id) =>
+						options.find((option) => option.optionid === id)
+							?.optionname
+				)
+				.join(", ");
+
+			setIncomingDetails((prevDetails) => ({
 				...prevDetails,
-				optionname: newOptionNames.join(", "), // Join option names for display
-				sku: Object.values(newSelectedSKUs).join(", "), // Ensure only one SKU per data entry
+				optionname: newOptionNames,
+				sku: Object.values(newSelectedSKUs).join(", "),
 			}));
 		}
 	};
 
 	useEffect(() => {
 		if (incoming) {
-			console.log("This data:", incoming);
-			setSelectedProduct(incoming.product.productname); // Pre-fill the product name
+			setSelectedProduct(incoming.product.productname);
 
-			// Extract selected option IDs from incoming.incomingdetails
 			const selectedOptionIds = incoming.incomingdetails.map(
-				(detail: { optionid: any }) => detail.optionid
+				(detail) => detail.optionid
 			);
 			setSelectedOptions(selectedOptionIds);
 
@@ -131,7 +143,6 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 				deliverystatus: incoming.deliverystatus || "Pending",
 			});
 
-			// Find the selected product
 			const selectedProduct = products.find(
 				(product) =>
 					product.productname === incoming.product.productname
@@ -140,10 +151,9 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 			if (selectedProduct) {
 				setOptions(selectedProduct.optiondetails);
 
-				// If no selected options, set the first option by default
 				if (selectedOptionIds.length === 0) {
 					const defaultOption = selectedProduct.optiondetails.find(
-						(option: { optionid: any }) =>
+						(option) =>
 							option.optionid ===
 							incoming.incomingdetails[0]?.optionid
 					);
@@ -152,17 +162,15 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 					);
 				}
 
-				// Match optionid from incoming.incomingdetails to the correct SKU in optiondetails
 				const selectedSKUs = incoming.incomingdetails.reduce(
-					(acc: any, detail: any) => {
+					(acc: Record<string, string>, detail) => {
 						const matchedOption =
 							selectedProduct.optiondetails.find(
-								(option: { optionid: any }) =>
-									option.optionid === detail.optionid
+								(option) => option.optionid === detail.optionid
 							);
 						acc[detail.optionid] = matchedOption
 							? matchedOption.sku
-							: "No SKU"; // Default value if no match
+							: "No SKU";
 						return acc;
 					},
 					{}
@@ -170,14 +178,14 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 				setSelectedSKU(selectedSKUs);
 			}
 
-			// Pre-fill supplier cost, incoming qty, landed cost, and gross price
-			const detailsMap: { [key: string]: any } = {};
-			incoming.incomingdetails.forEach((detail: any) => {
+			const detailsMap: Record<string, IncomingDetail> = {};
+			incoming.incomingdetails.forEach((detail) => {
 				detailsMap[detail.optionid] = {
-					suppliercost: detail.suppliercost || "",
-					incomingqty: detail.incomingqty || "",
-					landedcost: detail.landedcost || "",
-					grossprice: detail.grossprice || "",
+					optionid: detail.optionid,
+					suppliercost: detail.suppliercost || 0,
+					incomingqty: detail.incomingqty || 0,
+					landedcost: detail.landedcost || 0,
+					grossprice: detail.grossprice || 0,
 				};
 			});
 			setIncomingDetailsMap(detailsMap);
@@ -186,7 +194,7 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 
 	const handleSubmit = async () => {
 		const incomingData = {
-			productid: incomingDetails.productid,
+			productid: incomingDetails.product?.productid,
 			remarks: (document.getElementById("remarks") as HTMLTextAreaElement)
 				?.value,
 			eta: (document.getElementById("date") as HTMLInputElement)?.value,
@@ -195,26 +203,34 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 			)?.value,
 			incomingdetails: selectedOptions.map((optionId) => ({
 				optionid: optionId,
-				suppliercost: (
-					document.getElementById(
-						`suppliercost-${optionId}`
-					) as HTMLInputElement
-				)?.value,
-				incomingqty: (
-					document.getElementById(
-						`incomingqty-${optionId}`
-					) as HTMLInputElement
-				)?.value,
-				grossprice: (
-					document.getElementById(
-						`grossprice-${optionId}`
-					) as HTMLInputElement
-				)?.value,
-				landedcost: (
-					document.getElementById(
-						`landedcost-${optionId}`
-					) as HTMLInputElement
-				)?.value,
+				suppliercost: parseFloat(
+					(
+						document.getElementById(
+							`suppliercost-${optionId}`
+						) as HTMLInputElement
+					)?.value
+				),
+				incomingqty: parseFloat(
+					(
+						document.getElementById(
+							`incomingqty-${optionId}`
+						) as HTMLInputElement
+					)?.value
+				),
+				grossprice: parseFloat(
+					(
+						document.getElementById(
+							`grossprice-${optionId}`
+						) as HTMLInputElement
+					)?.value
+				),
+				landedcost: parseFloat(
+					(
+						document.getElementById(
+							`landedcost-${optionId}`
+						) as HTMLInputElement
+					)?.value
+				),
 			})),
 		};
 
@@ -494,7 +510,10 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 												...prev,
 												[optionId]: {
 													...prev[optionId],
-													incomingqty: e.target.value,
+													incomingqty:
+														parseFloat(
+															e.target.value
+														) || 0,
 												},
 											}))
 										}
@@ -529,8 +548,9 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 												...prev,
 												[optionId]: {
 													...prev[optionId],
-													suppliercost:
-														e.target.value,
+													suppliercost: parseFloat(
+														e.target.value
+													),
 												},
 											}))
 										}
@@ -564,7 +584,9 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 												...prev,
 												[optionId]: {
 													...prev[optionId],
-													landedcost: e.target.value,
+													landedcost: parseFloat(
+														e.target.value
+													),
 												},
 											}))
 										}
@@ -598,7 +620,9 @@ const ReceivingDialog = ({ incoming }: IncomingDialogProps) => {
 												...prev,
 												[optionId]: {
 													...prev[optionId],
-													grossprice: e.target.value,
+													grossprice: parseFloat(
+														e.target.value
+													),
 												},
 											}))
 										}

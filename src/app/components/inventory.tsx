@@ -11,15 +11,47 @@ import {
 import { fetchInventory } from "../scripts/fetchInventory";
 import supabase from "@/config/supabase";
 
+interface InventoryItem {
+	inventoryid: string;
+	optionid: string;
+	onhandqty: number;
+	availableqty: number;
+	incoming: {
+		incomingid: string;
+		product: {
+			productname: string;
+			brand: {
+				brandname: string;
+			};
+			optiondetails: {
+				optionid: string;
+				optionname: string;
+				sku: string;
+			}[];
+		};
+		incomingdetails: {
+			optionid: string;
+			landedcost: number;
+			grossprice: number;
+		}[];
+	};
+}
+
+interface SelectedItem extends InventoryItem {
+	quantity: number;
+	deliverystatus: string;
+	soldprice?: string;
+}
+
 const Inventory = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
 	const [stockFilter, setStockFilter] = useState("all");
-	const [inventory, setInventory] = useState<any[]>([]);
+	const [inventory, setInventory] = useState<InventoryItem[]>([]);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isFirstPage, setIsFirstPage] = useState(false);
 	const [isLastPage, setIsLastPage] = useState(false);
-	const [selectedItems, setSelectedItems] = useState<any[]>([]); // State to store selected items
+	const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -30,16 +62,13 @@ const Inventory = () => {
 		fetchData();
 	}, []);
 
-	// Handle selection from page size dropdown
 	const handleDropdownSelection = (
 		event: React.ChangeEvent<HTMLSelectElement>
 	) => {
 		setItemsPerPage(Number(event.target.value));
 	};
 
-	// Handle selection from stock filter
 	const handleStockFilter = (filter: string) => {
-		// Toggle the selection (unselect if already selected)
 		setStockFilter((prevFilter) => (prevFilter === filter ? "" : filter));
 	};
 
@@ -79,7 +108,7 @@ const Inventory = () => {
 		currentPage * itemsPerPage
 	);
 
-	const handleAddToDispatch = (item: any) => {
+	const handleAddToDispatch = (item: InventoryItem) => {
 		setSelectedItems((prevItems) => {
 			const existingItemIndex = prevItems.findIndex(
 				(i) =>
@@ -111,7 +140,7 @@ const Inventory = () => {
 	};
 
 	const handleIncrement = (
-		optionid: any,
+		optionid: string,
 		brandname: string,
 		productname: string,
 		availableStock: number
@@ -134,7 +163,7 @@ const Inventory = () => {
 	};
 
 	const handleDecrement = (
-		optionid: any,
+		optionid: string,
 		brandname: string,
 		productname: string
 	) => {
@@ -152,7 +181,7 @@ const Inventory = () => {
 
 	const handleChange = (
 		e: React.ChangeEvent<HTMLInputElement>,
-		optionid: any,
+		optionid: string,
 		brandname: string,
 		productname: string,
 		availableStock: number
@@ -177,7 +206,6 @@ const Inventory = () => {
 			return;
 		}
 
-		// Format data for dispatch
 		const dispatchItems = selectedItems
 			.map((item) => ({
 				incomingid: item.incoming.incomingid,
@@ -212,9 +240,7 @@ const Inventory = () => {
 
 			console.log("Items dispatched successfully:", data);
 
-			// Update availableqty in inventory
 			for (const item of dispatchItems) {
-				// Fetch current availableqty
 				const { data: inventoryData, error: fetchError } =
 					await supabase
 						.from("inventory")
@@ -233,7 +259,6 @@ const Inventory = () => {
 				const newAvailableQty =
 					(inventoryData?.availableqty || 0) - item.dispatchquantity;
 
-				// Update availableqty
 				const { error: updateError } = await supabase
 					.from("inventory")
 					.update({ availableqty: newAvailableQty })
@@ -371,17 +396,17 @@ const Inventory = () => {
 						</thead>
 						<tbody>
 							{paginatedInventory.map(
-								(item: any, index: number) => {
+								(item: InventoryItem, index: number) => {
 									const incomingDetail =
 										item.incoming.incomingdetails.find(
-											(detail: any) =>
+											(detail) =>
 												detail.optionid ===
 												item.optionid
 										);
 
 									const matchedOption =
 										item.incoming.product.optiondetails.find(
-											(opt: any) =>
+											(opt) =>
 												opt.optionid === item.optionid
 										);
 
@@ -499,11 +524,28 @@ const Inventory = () => {
 							<div className="px-3">
 								{Object.values(
 									selectedItems.reduce(
-										(acc: any, item: any) => {
+										(
+											acc: Record<
+												string,
+												{
+													productname: string;
+													brandname: string;
+													options: {
+														optionid: string;
+														optionname: string;
+														availableqty: number;
+														quantity: number;
+														deliverystatus: string;
+														soldprice?: string;
+													}[];
+												}
+											>,
+											item
+										) => {
 											const key = `${item.incoming.product.productname}-${item.incoming.product.brand.brandname}`;
 											const matchedOption =
 												item.incoming.product.optiondetails.find(
-													(opt: any) =>
+													(opt) =>
 														opt.optionid ===
 														item.optionid
 												);
@@ -536,215 +578,232 @@ const Inventory = () => {
 										},
 										{}
 									)
-								).map((groupedItem: any, index) => (
-									<div
-										key={index}
-										className="flex flex-col lg:flex-row items-center py-4 border-b border-gray-200 gap-4 w-full"
-									>
-										<div className="flex flex-row items-center w-full">
-											<div className="">
-												<div>
-													<h2 className="font-semibold text-lg text-black mb-2">
-														{
-															groupedItem.productname
-														}
-													</h2>
-													<p className="text-sm text-gray-500 mb-2">
-														By:{" "}
-														{groupedItem.brandname}
-													</p>
-													{groupedItem.options.map(
-														(
-															opt: any,
-															optIndex: number
-														) => (
-															<div
-																key={optIndex}
-																className="flex items-center mb-2"
-															>
-																{/* Option Name */}
-																<p className="text-sm text-black pr-4 mr-4 border-r border-gray-200">
-																	Option:{" "}
-																	<span className="text-gray-500">
-																		{
-																			opt.optionname
-																		}
-																	</span>
-																</p>
+								).map(
+									(
+										groupedItem: {
+											productname: string;
+											brandname: string;
+											options: {
+												optionid: string;
+												optionname: string;
+												availableqty: number;
+												quantity: number;
+												deliverystatus: string;
+												soldprice?: string;
+											}[];
+										},
+										index
+									) => (
+										<div
+											key={index}
+											className="flex flex-col lg:flex-row items-center py-4 border-b border-gray-200 gap-4 w-full"
+										>
+											<div className="flex flex-row items-center w-full">
+												<div className="">
+													<div>
+														<h2 className="font-semibold text-lg text-black mb-2">
+															{
+																groupedItem.productname
+															}
+														</h2>
+														<p className="text-sm text-gray-500 mb-2">
+															By:{" "}
+															{
+																groupedItem.brandname
+															}
+														</p>
+														{groupedItem.options.map(
+															(opt, optIndex) => (
+																<div
+																	key={
+																		optIndex
+																	}
+																	className="flex items-center mb-2"
+																>
+																	{/* Option Name */}
+																	<p className="text-sm text-black pr-4 mr-4 border-r border-gray-200">
+																		Option:{" "}
+																		<span className="text-gray-500">
+																			{
+																				opt.optionname
+																			}
+																		</span>
+																	</p>
 
-																{/* Quantity Button */}
-																<div className="flex items-center space-x-1">
-																	<button
-																		type="button"
-																		onClick={() =>
-																			handleDecrement(
-																				opt.optionid,
-																				groupedItem.brandname,
-																				groupedItem.productname
-																			)
-																		}
-																		className="shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
-																	>
-																		<svg
-																			className="w-2.5 h-2.5 text-gray-900 dark:text-white"
-																			aria-hidden="true"
-																			xmlns="http://www.w3.org/2000/svg"
-																			fill="none"
-																			viewBox="0 0 18 2"
+																	{/* Quantity Button */}
+																	<div className="flex items-center space-x-1">
+																		<button
+																			type="button"
+																			onClick={() =>
+																				handleDecrement(
+																					opt.optionid,
+																					groupedItem.brandname,
+																					groupedItem.productname
+																				)
+																			}
+																			className="shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
 																		>
-																			<path
-																				stroke="currentColor"
-																				strokeLinecap="round"
-																				strokeLinejoin="round"
-																				strokeWidth="2"
-																				d="M1 1h16"
-																			/>
-																		</svg>
-																	</button>
+																			<svg
+																				className="w-2.5 h-2.5 text-gray-900 dark:text-white"
+																				aria-hidden="true"
+																				xmlns="http://www.w3.org/2000/svg"
+																				fill="none"
+																				viewBox="0 0 18 2"
+																			>
+																				<path
+																					stroke="currentColor"
+																					strokeLinecap="round"
+																					strokeLinejoin="round"
+																					strokeWidth="2"
+																					d="M1 1h16"
+																				/>
+																			</svg>
+																		</button>
+																		<input
+																			type="text"
+																			value={
+																				opt.quantity
+																			}
+																			onChange={(
+																				e
+																			) =>
+																				handleChange(
+																					e,
+																					opt.optionid,
+																					groupedItem.brandname,
+																					groupedItem.productname,
+																					opt.availableqty
+																				)
+																			}
+																			className="shrink-0 text-gray-900 dark:text-white border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center"
+																			required
+																		/>
+																		<button
+																			type="button"
+																			onClick={() =>
+																				handleIncrement(
+																					opt.optionid,
+																					groupedItem.brandname,
+																					groupedItem.productname,
+																					opt.availableqty
+																				)
+																			}
+																			className="shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
+																		>
+																			<svg
+																				className="w-2.5 h-2.5 text-gray-900 dark:text-white"
+																				aria-hidden="true"
+																				xmlns="http://www.w3.org/2000/svg"
+																				fill="none"
+																				viewBox="0 0 18 18"
+																			>
+																				<path
+																					stroke="currentColor"
+																					strokeLinecap="round"
+																					strokeLinejoin="round"
+																					strokeWidth="2"
+																					d="M9 1v16M1 9h16"
+																				/>
+																			</svg>
+																		</button>
+																		<p className="text-xs text-gray-500">
+																			(Max:{" "}
+																			{
+																				opt.availableqty
+																			}
+																			)
+																		</p>
+																	</div>
+
+																	{/* Sold Price */}
 																	<input
-																		type="text"
+																		type="number"
+																		placeholder="Sold Price"
 																		value={
-																			opt.quantity
+																			opt.soldprice ||
+																			""
 																		}
 																		onChange={(
 																			e
-																		) =>
-																			handleChange(
-																				e,
-																				opt.optionid,
-																				groupedItem.brandname,
-																				groupedItem.productname,
-																				opt.availableqty
-																			)
-																		}
-																		className="shrink-0 text-gray-900 dark:text-white border-0 bg-transparent text-sm font-normal focus:outline-none focus:ring-0 max-w-[2.5rem] text-center"
-																		required
+																		) => {
+																			const updatedPrice =
+																				e
+																					.target
+																					.value;
+																			setSelectedItems(
+																				(
+																					prevItems
+																				) =>
+																					prevItems.map(
+																						(
+																							item
+																						) =>
+																							item.optionid ===
+																							opt.optionid
+																								? {
+																										...item,
+																										soldprice:
+																											updatedPrice,
+																								  }
+																								: item
+																					)
+																			);
+																		}}
+																		className="ml-4 p-1 text-xs border rounded w-20"
 																	/>
-																	<button
-																		type="button"
-																		onClick={() =>
-																			handleIncrement(
-																				opt.optionid,
-																				groupedItem.brandname,
-																				groupedItem.productname,
-																				opt.availableqty
-																			)
+
+																	{/* Delivery Status */}
+																	<select
+																		value={
+																			opt.deliverystatus
 																		}
-																		className="shrink-0 bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 hover:bg-gray-200 inline-flex items-center justify-center border border-gray-300 rounded-md h-5 w-5 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none"
+																		onChange={(
+																			e
+																		) => {
+																			const updatedStatus =
+																				e
+																					.target
+																					.value;
+																			setSelectedItems(
+																				(
+																					prevItems
+																				) =>
+																					prevItems.map(
+																						(
+																							item
+																						) =>
+																							item.optionid ===
+																							opt.optionid
+																								? {
+																										...item,
+																										deliverystatus:
+																											updatedStatus,
+																								  }
+																								: item
+																					)
+																			);
+																		}}
+																		className="text-sm ml-4 p-1 border rounded"
 																	>
-																		<svg
-																			className="w-2.5 h-2.5 text-gray-900 dark:text-white"
-																			aria-hidden="true"
-																			xmlns="http://www.w3.org/2000/svg"
-																			fill="none"
-																			viewBox="0 0 18 18"
-																		>
-																			<path
-																				stroke="currentColor"
-																				strokeLinecap="round"
-																				strokeLinejoin="round"
-																				strokeWidth="2"
-																				d="M9 1v16M1 9h16"
-																			/>
-																		</svg>
-																	</button>
-																	<p className="text-xs text-gray-500">
-																		(Max:{" "}
-																		{
-																			opt.availableqty
-																		}
-																		)
-																	</p>
+																		<option value="Pending">
+																			Pending
+																		</option>
+																		<option value="Ongoing">
+																			Ongoing
+																		</option>
+																		<option value="Received">
+																			Received
+																		</option>
+																	</select>
 																</div>
-
-																{/* Sold Price */}
-																<input
-																	type="number"
-																	placeholder="Sold Price"
-																	value={
-																		opt.soldprice ||
-																		""
-																	}
-																	onChange={(
-																		e
-																	) => {
-																		const updatedPrice =
-																			e
-																				.target
-																				.value;
-																		setSelectedItems(
-																			(
-																				prevItems
-																			) =>
-																				prevItems.map(
-																					(
-																						item
-																					) =>
-																						item.optionid ===
-																						opt.optionid
-																							? {
-																									...item,
-																									soldprice:
-																										updatedPrice,
-																							  }
-																							: item
-																				)
-																		);
-																	}}
-																	className="ml-4 p-1 text-xs border rounded w-20"
-																/>
-
-																{/* Delivery Status */}
-																<select
-																	value={
-																		opt.deliverystatus
-																	}
-																	onChange={(
-																		e
-																	) => {
-																		const updatedStatus =
-																			e
-																				.target
-																				.value;
-																		setSelectedItems(
-																			(
-																				prevItems
-																			) =>
-																				prevItems.map(
-																					(
-																						item
-																					) =>
-																						item.optionid ===
-																						opt.optionid
-																							? {
-																									...item,
-																									deliverystatus:
-																										updatedStatus,
-																							  }
-																							: item
-																				)
-																		);
-																	}}
-																	className="text-sm ml-4 p-1 border rounded"
-																>
-																	<option value="Pending">
-																		Pending
-																	</option>
-																	<option value="Ongoing">
-																		Ongoing
-																	</option>
-																	<option value="Received">
-																		Received
-																	</option>
-																</select>
-															</div>
-														)
-													)}
+															)
+														)}
+													</div>
 												</div>
 											</div>
 										</div>
-									</div>
-								))}
+									)
+								)}
 							</div>
 							<div className="flex justify-end">
 								<button

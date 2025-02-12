@@ -22,7 +22,7 @@ export default function Nav() {
 	};
 
 	useEffect(() => {
-		if (isMobileMenuOpen || isUserMenuOpen) {
+		if (isMobileMenuOpen) {
 			const handleClickOutside = (event: MouseEvent) => {
 				if (
 					event.target &&

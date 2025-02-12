@@ -7,7 +7,6 @@ import { fetchIncoming } from "@/app/scripts/fetchIncoming";
 import {
 	Pagination,
 	PaginationContent,
-	PaginationEllipsis,
 	PaginationItem,
 	PaginationLink,
 	PaginationNext,
@@ -22,23 +21,47 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 
+interface Option {
+	optionid: string;
+	optionname: string;
+	sku: string;
+}
+
+interface Product {
+	productid: string;
+	productname: string;
+	brand: {
+		brandname: string;
+	};
+	optiondetails: Option[];
+}
+
+interface IncomingDetail {
+	optionid: string;
+	suppliercost: number;
+	incomingqty: number;
+	landedcost: number;
+	grossprice: number;
+}
+
+interface IncomingItem {
+	optionname: string;
+	sku: string;
+	product: Product;
+	incomingid: string;
+	remarks: string;
+	eta: string;
+	deliverystatus: string;
+	incomingdetails: IncomingDetail[];
+}
+
 const Incoming = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
 	const [stockFilter, setStockFilter] = useState("pending");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
-	const [editIncoming, setEditIncoming] = useState<any | null>(null);
+	const [editIncoming, setEditIncoming] = useState<IncomingItem | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
-
-	interface IncomingItem {
-		optionname: string;
-		sku: string;
-		product: any;
-		incomingid: string;
-		eta: string;
-		deliverystatus: string;
-		incomingdetails: any;
-	}
 
 	const [incomingItems, setIncomingItems] = useState<IncomingItem[]>([]); // State to store incoming data
 
@@ -49,7 +72,7 @@ const Incoming = () => {
 			console.log(data);
 		};
 		fetchData();
-	}, []); // Empty array ensures it only runs on component mount
+	}, []);
 
 	const handleDropdownSelection = (
 		event: React.ChangeEvent<HTMLSelectElement>
@@ -97,7 +120,7 @@ const Incoming = () => {
 		setCurrentPage(pageNumber);
 	}
 
-	const handleEditClick = (product: any) => {
+	const handleEditClick = (product: IncomingItem) => {
 		setEditIncoming(product);
 		setDialogOpen(true);
 	};
@@ -278,15 +301,12 @@ const Incoming = () => {
 									{/* Supplier Cost */}
 									<td className="px-6 py-4">
 										{item.incomingdetails
-											.map(
-												(detail: {
-													suppliercost: any;
-												}) =>
-													detail.suppliercost
-														? `₱${Number(
-																detail.suppliercost
-														  ).toLocaleString()}` // Add peso sign before the formatted number
-														: ""
+											.map((detail) =>
+												detail.suppliercost
+													? `₱${Number(
+															detail.suppliercost
+													  ).toLocaleString()}` // Add peso sign before the formatted number
+													: ""
 											)
 											.join(", ")}
 									</td>
