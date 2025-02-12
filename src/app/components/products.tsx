@@ -29,18 +29,27 @@ type Option = {
 };
 
 type OptionDetail = {
-	options: any;
 	sku: string;
 	optionid: number;
 	optionname: string;
 };
 
+type Product = {
+	productid: number;
+	brandid: number;
+	productname: string;
+	brandname: string;
+	description: string;
+	sku: string;
+	optiondetails?: OptionDetail[];
+};
+
 const Products = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
 	const [currentPage, setCurrentPage] = useState(1);
-	const [products, setProducts] = useState<any[]>([]); // State to store products
+	const [products, setProducts] = useState<Product[]>([]); // State to store products
 	const [options, setOptions] = useState<Option[]>([]); // State to store options
-	const [editProduct, setEditProduct] = useState<any | null>(null);
+	const [editProduct, setEditProduct] = useState<Product | null>(null);
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 
@@ -61,7 +70,7 @@ const Products = () => {
 		getOptions();
 	}, []);
 
-	const handleEditClick = (product: any) => {
+	const handleEditClick = (product: Product) => {
 		setEditProduct(product);
 		setDialogOpen(true);
 	};
@@ -231,7 +240,7 @@ const Products = () => {
 											{product.productname}
 										</td>
 										<td className="px-6 py-4">
-											{product.brands?.brandname}
+											{product.brandname}
 										</td>
 										<td className="px-6 py-4">
 											{product.optiondetails &&

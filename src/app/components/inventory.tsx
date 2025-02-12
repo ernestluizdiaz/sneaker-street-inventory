@@ -87,7 +87,7 @@ const Inventory = () => {
 			if (stockFilter === "inStock") {
 				return item.onhandqty > 0;
 			} else if (stockFilter === "outOfStock") {
-				return item.onhandqty === 0;
+				return item.onhandqty === 0 || item.availableqty === 0;
 			}
 			return true;
 		})

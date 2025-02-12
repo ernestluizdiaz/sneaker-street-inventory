@@ -5,18 +5,32 @@ import { Label } from "@/components/ui/label";
 import supabase from "@/config/supabase";
 import { toast } from "@/hooks/use-toast";
 
-interface Brands {
+type Brands = {
 	brandid: number;
 	brandname: string;
-}
+};
 
-interface Options {
+type Options = {
 	optionid: number;
 	optionname: string;
-}
+};
+
+type OptionDetail = {
+	sku: string;
+	optionid: number;
+	optionname: string;
+};
+
+type Product = {
+	productid: number;
+	productname: string;
+	brandid: number;
+	description: string;
+	optiondetails?: OptionDetail[];
+};
 
 interface ProductDialogProps {
-	product: any; // Add the appropriate type for your product object here
+	product: Product | null;
 }
 
 const ProductDialog = ({ product }: ProductDialogProps) => {
@@ -61,7 +75,7 @@ const ProductDialog = ({ product }: ProductDialogProps) => {
 			setDescription(product.description || ""); // Populate description field
 			const selectedSku: { [key: number]: string } = {};
 			const selectedOpt: { [key: number]: boolean } = {};
-			product.optiondetails.forEach((option: any) => {
+			product.optiondetails?.forEach((option) => {
 				selectedSku[option.optionid] = option.sku;
 				selectedOpt[option.optionid] = true;
 			});

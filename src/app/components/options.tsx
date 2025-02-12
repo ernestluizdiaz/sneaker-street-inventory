@@ -20,13 +20,18 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 
+interface Option {
+	optionname: string;
+	description: string;
+}
+
 const Options = () => {
-	const [itemsPerPage, setItemsPerPage] = useState(5);
-	const [currentPage, setCurrentPage] = useState(1);
-	const [options, setOptions] = useState<any[]>([]);
-	const [editOption, setEditOption] = useState<any | null>(null);
-	const [dialogOpen, setDialogOpen] = useState(false);
-	const [searchQuery, setSearchQuery] = useState("");
+	const [itemsPerPage, setItemsPerPage] = useState<number>(5);
+	const [currentPage, setCurrentPage] = useState<number>(1);
+	const [options, setOptions] = useState<Option[]>([]);
+	const [editOption, setEditOption] = useState<Option | null>(null);
+	const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+	const [searchQuery, setSearchQuery] = useState<string>("");
 
 	useEffect(() => {
 		const getOptions = async () => {
@@ -48,7 +53,7 @@ const Options = () => {
 		setCurrentPage(1); // Reset to first page when search query changes
 	};
 
-	const handleEditClick = (option: any) => {
+	const handleEditClick = (option: Option) => {
 		setEditOption(option);
 		setDialogOpen(true);
 	};
@@ -59,13 +64,11 @@ const Options = () => {
 	};
 
 	const filteredOptions = options.filter(
-		(options) =>
-			options.optionname
+		(option) =>
+			option.optionname
 				.toLowerCase()
 				.includes(searchQuery.toLowerCase()) ||
-			String(options.description)
-				.toLowerCase()
-				.includes(searchQuery.toLowerCase())
+			option.description.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
 	const totalPages = Math.ceil(filteredOptions.length / itemsPerPage);

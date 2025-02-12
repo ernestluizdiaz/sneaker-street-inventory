@@ -1,14 +1,51 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { fetchOutgoing } from "../scripts/fetchOutgoing";
-import supabase from "@/config/supabase";
+
+interface Brand {
+	brandname: string;
+}
+
+interface Option {
+	optionid: number;
+	optionname: string;
+	sku: string;
+}
+
+interface Product {
+	productname: string;
+	brand: Brand;
+	optiondetails: Option[];
+}
+
+interface IncomingDetail {
+	optionid: number;
+	landedcost: number;
+	grossprice: number;
+}
+
+interface IncomingItem {
+	incomingid: number;
+	product: Product;
+	incomingdetails: IncomingDetail[];
+}
+
+interface OutgoingItem {
+	outgoingid: number;
+	optionid: number;
+	dispatchquantity: number;
+	soldprice: number;
+	deliverystatus: string;
+	date: string;
+	incoming: IncomingItem;
+}
 
 const Outgoing = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
 	const [stockFilter, setStockFilter] = useState("all");
-	const [outgoing, setOutgoing] = useState<any[]>([]);
 	const [editIndex, setEditIndex] = useState<number | null>(null);
 	const [editStatus, setEditStatus] = useState<string>("");
+	const [outgoing, setOutgoing] = useState<OutgoingItem[]>([]);
 
 	// Handle selection from page size dropdown
 	const handleDropdownSelection = (
@@ -176,16 +213,18 @@ const Outgoing = () => {
 						</tr>
 					</thead>
 					<tbody>
-						{outgoing.map((item: any, index: number) => {
-							const outgoingDetail =
-								item.incoming.incomingdetails.find(
-									(detail: any) =>
-										detail.optionid === item.optionid
-								);
+						{outgoing.map((item: OutgoingItem, index: number) => {
+							// To find a specific detail object within the incomingdetails array.
+							// const outgoingDetail =
+							// 	item.incoming.incomingdetails.find(
+							// 		(detail: any) =>
+							// 			detail.optionid === item.optionid
+							// 	);
 
 							const matchedOption =
 								item.incoming.product.optiondetails.find(
-									(opt: any) => opt.optionid === item.optionid
+									(opt: Option) =>
+										opt.optionid === item.optionid
 								);
 
 							return (
