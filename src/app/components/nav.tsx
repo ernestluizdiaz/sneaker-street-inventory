@@ -266,8 +266,8 @@ export default function Nav() {
 											Are you sure you want to logout?
 										</DialogTitle>
 										<DialogDescription>
-											Clicking "Logout" will go back you
-											to the login page.
+											Clicking &quot;Logout&quot; will go
+											back you to the login page.
 										</DialogDescription>
 									</DialogHeader>
 									<div className="mt-4 flex justify-end space-x-4">
