@@ -4,6 +4,7 @@ import supabase from "@/config/supabase";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Logo from "@/../public/img/logo_black.png";
+import Link from "next/link";
 
 export default function LoginForm() {
 	const [email, setEmail] = useState("");
@@ -27,7 +28,7 @@ export default function LoginForm() {
 		} else if (data?.user) {
 			// If login is successful, redirect to dashboard
 			console.log("Login successful:", data);
-			console.log(password);
+
 			router.push("/dashboard"); // Redirect to dashboard
 		}
 	};
@@ -72,6 +73,11 @@ export default function LoginForm() {
 						/>
 					</div>
 					{error && <p className="text-red-500 text-sm">{error}</p>}
+					<p className="text-sm mt-2 text-right">
+						<Link href="/reset-password" className="text-blue-500">
+							Forgot Password?
+						</Link>
+					</p>
 					<button
 						type="submit"
 						className="w-full bg-black text-white text-sm font-bold p-2 rounded-md transition-transform transform hover:scale-105"

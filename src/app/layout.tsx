@@ -81,7 +81,7 @@ export default function RootLayout({
 				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 			>
 				{/* Show Nav only if the user is logged in */}
-				{session && <Nav />}
+				{session && pathname !== "/reset-password" && <Nav />}
 				<main>{children}</main>
 				<Toaster />
 			</body>

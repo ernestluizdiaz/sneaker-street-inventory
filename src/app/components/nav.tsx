@@ -6,19 +6,39 @@ import Logo from "../../../public/img/logo.png";
 import { useRouter } from "next/navigation";
 import { usePathname } from "next/navigation";
 import supabase from "@/config/supabase";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function Nav() {
 	const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [isUserMenuOpen, setUserMenuOpen] = useState(false);
 	const router = useRouter();
 	const pathname = usePathname();
+	const [username, setUsername] = useState("");
+	const [isModalOpen, setIsModalOpen] = useState(false);
+
+	const getUserMetadata = async () => {
+		const { data, error } = await supabase.auth.getUser();
+
+		if (error) {
+			console.error("Error fetching user metadata:", error.message);
+			return;
+		}
+		setUsername(data.user?.user_metadata?.userName || "Guest");
+	};
+
+	useEffect(() => {
+		getUserMetadata();
+	}, []);
 
 	const handleMobileMenuToggle = () => {
 		setMobileMenuOpen(!isMobileMenuOpen);
-	};
-
-	const handleUserMenuToggle = () => {
-		setUserMenuOpen(!isUserMenuOpen);
 	};
 
 	useEffect(() => {
@@ -86,6 +106,7 @@ export default function Nav() {
 	}, [pathname]);
 
 	const handleSignOut = async () => {
+		setIsModalOpen(false);
 		await supabase.auth.signOut();
 		router.push("/"); // Redirect to login page after sign out
 	};
@@ -205,62 +226,69 @@ export default function Nav() {
 					</div>
 
 					{/* User Menu */}
-					<div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-						<h2 className="relative text-white">Hi, Admin</h2>
-						<div className="relative ml-3">
-							<div>
-								<button
-									type="button"
-									onClick={handleUserMenuToggle}
-									className="relative flex rounded-full bg-gray-800 text-sm focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 focus:outline-hidden"
-									id="user-menu-button"
-									aria-expanded={
-										isUserMenuOpen ? "true" : "false"
-									}
-									aria-haspopup="true"
-								>
-									<span className="absolute -inset-1.5"></span>
-									<span className="sr-only">
-										Open user menu
-									</span>
-									<img
-										className="w-8 h-8 rounded-full"
-										src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-										alt="User Avatar"
-									/>
-								</button>
-							</div>
 
-							<div
-								className={`absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 ring-1 shadow-lg ring-black/5 focus:outline-hidden ${
-									isUserMenuOpen ? "block" : "hidden"
-								}`}
-								role="menu"
-								aria-orientation="vertical"
-								aria-labelledby="user-menu-button"
-								tabIndex={-1}
+					<div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+						<h2 className="relative text-white">Hi, {username}</h2>
+						<div className="relative ml-3 hidden sm:block">
+							<button
+								className="text-white hover:text-gray-300 transition-transform duration-200 ease-in-out transform hover:scale-110"
+								onClick={() => setIsModalOpen(true)}
 							>
-								<Link
-									onClick={() => {
-										handleSignOut();
-										const links =
-											document.querySelectorAll(
-												"a[href]"
-											);
-										links.forEach((item) =>
-											item.classList.remove("font-bold")
-										);
-									}}
-									className="block px-4 py-2 text-sm text-red-700 hover:bg-gray-100 hover:text-red-900"
-									role="menuitem"
-									tabIndex={-1}
-									id="user-menu-item-2"
-									href={""}
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									strokeWidth="1.5"
+									stroke="currentColor"
+									className="w-6 h-6"
 								>
-									Sign out
-								</Link>
-							</div>
+									<path
+										strokeLinecap="round"
+										strokeLinejoin="round"
+										d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1.5a2.5 2.5 0 01-2.5 2.5h-9A2.5 2.5 0 010 17.5v-11A2.5 2.5 0 012.5 4h9A2.5 2.5 0 0114 6.5V8"
+									/>
+								</svg>
+							</button>
 						</div>
+
+						{/* Modal for logout confirmation */}
+						{isModalOpen && (
+							<Dialog
+								open={isModalOpen}
+								onOpenChange={setIsModalOpen}
+							>
+								<DialogTrigger asChild>
+									{/* Optional additional button */}
+								</DialogTrigger>
+								<DialogContent className="bg-white p-6 rounded-md shadow-lg mx-auto w-96">
+									<DialogHeader className="text-left ">
+										<DialogTitle>
+											Are you sure you want to logout?
+										</DialogTitle>
+										<DialogDescription>
+											Clicking "Logout" will go back you
+											to the login page.
+										</DialogDescription>
+									</DialogHeader>
+									<div className="mt-4 flex justify-end space-x-4">
+										<button
+											className="px-4 py-2 bg-gray-200 rounded-md text-sm"
+											onClick={() =>
+												setIsModalOpen(false)
+											}
+										>
+											Cancel
+										</button>
+										<button
+											className="px-4 py-2 bg-red-500 text-white rounded-md text-sm"
+											onClick={handleSignOut}
+										>
+											Logout
+										</button>
+									</div>
+								</DialogContent>
+							</Dialog>
+						)}
 					</div>
 				</div>
 			</div>
@@ -308,6 +336,12 @@ export default function Nav() {
 					>
 						Settings
 					</Link>
+					<button
+						onClick={() => setIsModalOpen(true)}
+						className="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-white hover:bg-gray-700 hover:text-white"
+					>
+						Logout
+					</button>
 				</div>
 			</div>
 		</nav>
