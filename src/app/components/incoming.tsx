@@ -57,7 +57,7 @@ interface IncomingItem {
 
 const Incoming = () => {
 	const [itemsPerPage, setItemsPerPage] = useState(5);
-	const [stockFilter, setStockFilter] = useState("pending");
+	const [stockFilter, setStockFilter] = useState("all");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
 	const [editIncoming, setEditIncoming] = useState<IncomingItem | null>(null);

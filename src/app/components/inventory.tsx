@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/pagination";
 import { fetchInventory } from "../scripts/fetchInventory";
 import supabase from "@/config/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface InventoryItem {
 	inventoryid: string;
@@ -52,6 +53,7 @@ const Inventory = () => {
 	const [isFirstPage, setIsFirstPage] = useState(false);
 	const [isLastPage, setIsLastPage] = useState(false);
 	const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+	const { toast } = useToast();
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -202,7 +204,11 @@ const Inventory = () => {
 
 	const handleSubmit = async () => {
 		if (selectedItems.length === 0) {
-			alert("No items selected for dispatch.");
+			toast({
+				title: "Error",
+				description: "No items selected for dispatch.",
+				variant: "destructive",
+			});
 			return;
 		}
 
@@ -212,16 +218,19 @@ const Inventory = () => {
 				inventoryid: item.inventoryid,
 				optionid: item.optionid,
 				dispatchquantity: item.quantity,
-				deliverystatus: item.deliverystatus,
+				deliverystatus: "Pending",
 				soldprice: item.soldprice,
 				created_at: new Date(),
 			}))
-			.filter((item) => item.dispatchquantity > 0);
+			.filter((item) => item.dispatchquantity > 0 && item.soldprice);
 
 		if (dispatchItems.length === 0) {
-			alert(
-				"Please add a valid quantity for at least one item before dispatching."
-			);
+			toast({
+				title: "Error",
+				description:
+					"Please add a valid quantity for at least one item before dispatching.",
+				variant: "destructive",
+			});
 			return;
 		}
 
@@ -234,7 +243,11 @@ const Inventory = () => {
 
 			if (error) {
 				console.error("Error inserting data:", error.message);
-				alert("Failed to dispatch items. Please try again.");
+				toast({
+					title: "Error",
+					description: "Failed to dispatch items. Please try again.",
+					variant: "destructive",
+				});
 				return;
 			}
 
@@ -272,10 +285,22 @@ const Inventory = () => {
 				}
 			}
 
-			alert("Items dispatched successfully, and inventory updated!");
+			toast({
+				title: "Success",
+				description:
+					"Items dispatched successfully, and inventory updated!",
+				variant: "default",
+			});
+			setTimeout(() => {
+				window.location.reload();
+			}, 1000);
 		} catch (err) {
 			console.error("Unexpected error:", err);
-			alert("An unexpected error occurred. Please try again.");
+			toast({
+				title: "Error",
+				description: "An unexpected error occurred. Please try again.",
+				variant: "destructive",
+			});
 		}
 	};
 
@@ -753,7 +778,7 @@ const Inventory = () => {
 																	/>
 
 																	{/* Delivery Status */}
-																	<select
+																	{/* <select
 																		value={
 																			opt.deliverystatus
 																		}
@@ -794,7 +819,7 @@ const Inventory = () => {
 																		<option value="Received">
 																			Received
 																		</option>
-																	</select>
+																	</select> */}
 																</div>
 															)
 														)}

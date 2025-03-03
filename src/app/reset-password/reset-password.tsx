@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Logo from "@/../public/img/logo_black.png";
 import supabase from "@/config/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginForm() {
 	const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export default function LoginForm() {
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const searchParams = useSearchParams();
 	const router = useRouter();
+	const { toast } = useToast();
 
 	// Check if the reset token is present in the URL (user is resetting password)
 	const isResetMode = searchParams?.get("type") === "recovery";
@@ -26,7 +28,11 @@ export default function LoginForm() {
 		});
 
 		if (error) {
-			alert("Error: " + error.message);
+			toast({
+				title: "Error",
+				description: error.message,
+				variant: "destructive",
+			});
 		} else {
 			setEmailExists(true);
 		}
@@ -38,7 +44,11 @@ export default function LoginForm() {
 		e.preventDefault();
 
 		if (password !== confirmPassword) {
-			alert("Passwords do not match!");
+			toast({
+				title: "Error",
+				description: "Passwords do not match!",
+				variant: "destructive",
+			});
 			return;
 		}
 
@@ -46,9 +56,18 @@ export default function LoginForm() {
 		const { error } = await supabase.auth.updateUser({ password });
 
 		if (error) {
-			alert("Error: " + error.message);
+			toast({
+				title: "Error",
+				description: error.message,
+				variant: "destructive",
+			});
 		} else {
-			alert("Password successfully reset. Redirecting to login...");
+			toast({
+				title: "Success",
+				description:
+					"Password successfully reset. Redirecting to login...",
+				variant: "default",
+			});
 			await supabase.auth.signOut(); // Sign out user
 			router.push("/"); // Redirect to login page
 		}
