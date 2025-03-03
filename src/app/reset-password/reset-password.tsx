@@ -24,7 +24,8 @@ export default function LoginForm() {
 		e.preventDefault();
 
 		const { error } = await supabase.auth.resetPasswordForEmail(email, {
-			redirectTo: "http://localhost:3000/reset-password?type=recovery", // Redirect user with query param
+			redirectTo:
+				"https://sneaker-street-inventory.vercel.app/reset-password?type=recovery", // Redirect user with query param
 		});
 
 		if (error) {
